@@ -18,6 +18,7 @@ public class UserBean {
     private Integer bloodTypeId;
     private Integer roleId;
     private String status;
+    private String hospitalName;
     private Integer donateAgain;
 
     // Getters and setters

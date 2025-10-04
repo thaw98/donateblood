@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -87,5 +88,18 @@ public class DonorController {
         return "donor-list"; // This should be your new Thymeleaf template
     }
     
+    @GetMapping("/donors/edit/{id}")
+    public String showEditDonorForm(@PathVariable("id") int id, Model model) {
+        UserBean donor = donorRepository.getDonorById(id);  // Add this method
+        model.addAttribute("donor", donor);
+        model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
+        model.addAttribute("hospitals", hospitalRepository.getAllHospitals());
+        return "edit-donor-admin";  // new Thymeleaf template for editing donor
+    }
     
+    @PostMapping("/donors/update")
+    public String updateDonor(@ModelAttribute("donor") UserBean donor) {
+        donorRepository.updateDonor(donor);
+        return "redirect:/admin/donors";
+    }
 }

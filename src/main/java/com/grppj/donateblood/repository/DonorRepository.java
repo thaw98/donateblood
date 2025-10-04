@@ -76,4 +76,47 @@ public class DonorRepository {
             return user;
         });
     }
+    
+    public UserBean getDonorById(int id) {
+        String sql = "SELECT u.*, d.status, h.hospital_name " +
+                     "FROM user u " +
+                     "LEFT JOIN donation d ON u.id = d.user_id " +
+                     "LEFT JOIN hospital h ON d.hospital_id = h.id " +
+                     "WHERE u.id = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{id}, (rs, rowNum) -> {
+            UserBean user = new UserBean();
+            user.setId(rs.getInt("id"));
+            user.setUsername(rs.getString("username"));
+            user.setEmail(rs.getString("email"));
+            user.setPhone(rs.getString("phone"));
+            user.setGender(rs.getString("gender"));
+            user.setDateOfBirth(rs.getString("dateofbirth"));
+            user.setAddress(rs.getString("address"));
+            user.setStatus(rs.getString("status"));
+            user.setHospitalName(rs.getString("hospital_name"));
+            user.setDonateAgain(rs.getInt("donate_again"));
+            return user;
+        });
+    }
+    
+    public int updateDonor(UserBean donor) {
+        // Update phone and donate_again in user table
+        String sqlUser = "UPDATE user SET phone = ?, donate_again = ? WHERE id = ?";
+        int rowsUser = jdbcTemplate.update(sqlUser,
+            donor.getPhone(),
+            donor.getDonateAgain() != null && donor.getDonateAgain() == 1 ? 1 : 0,
+            donor.getId()
+        );
+
+        // Update status in donation table
+        String sqlDonation = "UPDATE donation SET status = ? WHERE user_id = ?";
+        int rowsDonation = jdbcTemplate.update(sqlDonation,
+            donor.getStatus(),
+            donor.getId()
+        );
+
+        // return total number of rows affected (you can change this as needed)
+        return rowsUser + rowsDonation;
+    }
+
 }

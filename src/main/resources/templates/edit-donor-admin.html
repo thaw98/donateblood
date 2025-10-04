@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Donor</title>
+</head>
+<body>
+    <h1>Edit Donor</h1>
+    <form th:action="@{/admin/donors/update}" th:object="${donor}" method="post">
+        <label for="phone">Phone Number</label>
+        <input type="text" th:field="*{phone}" id="phone" required />
+        <br>
+        <label for="status">Status</label>
+        <select th:field="*{status}" id="status">
+            <option value="Available">Available</option>
+            <option value="Used">Used</option>
+        </select>
+        <br>
+        <label>Donate Again?</label>
+        <input type="radio" th:field="*{donateAgain}" value="1" /> Yes
+        <input type="radio" th:field="*{donateAgain}" value="0" /> No
+        <br>
+        <input type="hidden" th:field="*{id}" />
+        <input type="submit" value="Update" />
+    </form>
+</body>
+</html>
