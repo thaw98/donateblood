@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>All Donors</title>
+</head>
+<body>
+<h2>All Donors</h2>
+<table border="1">
+    <tr>
+    		<th>No.</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Gender</th>
+        <th>Date of Birth</th>
+        <th>Address</th>
+        <th>Status</th>
+        <th>Donate Again?</th>
+        <th>Action</th>
+        <!-- Add other columns as needed -->
+    </tr>
+	<tr th:each="d, no : ${donorList}">
+	    <td th:text="${no.count}"></td> 
+	    <td th:text="${d.username}"></td>
+	    <td th:text="${d.email}"></td>
+	    <td th:text="${d.phone}"></td>
+	    <td th:text="${d.gender}"></td>
+	    <td th:text="${d.dateOfBirth}"></td>
+	    <td th:text="${d.address}"></td>
+	    <td th:text="${d.status}"></td>
+	    <td th:text="${d.donateAgain == 1 ? 'Yes' : 'No'}"></td>
+	    <td>Edit</td>
+	</tr>
+
+</table>
+
+</body>
+</html>

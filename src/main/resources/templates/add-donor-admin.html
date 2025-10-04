@@ -5,52 +5,48 @@
 <title>Add Donor</title>
 </head>
 <body>
-    <form th:action="@{/donors/add}" th:object="${donor}" method="post">
+    <form th:action="@{/admin/donors/add}" th:object="${donor}" method="post">
         <h1>Add Donor - Admin Dashboard</h1>
-        
-        <!-- Display current hospital -->
-        <div th:if="${hospital}">
-            <p><strong>Hospital:</strong> <span th:text="${hospital.hospitalName}"></span></p>
-        </div>
 
-        <label for="name">Name</label>
-        <input type="text" th:field="*{username}" id="name" required>
+        <!-- Show currently selected hospital name -->
+        <p><strong>Hospital Name:</strong> <span th:text="${hospital.hospitalName}"></span></p>
+
+        <label for="username">Username</label>
+        <input type="text" th:field="*{username}" id="username" required>
         <br>
 
         <label for="email">Email</label>
         <input type="email" th:field="*{email}" id="email" required>
         <br>
-
+		<label for="phone">Phone Number</label>
+		<input type="text" th:field="*{phone}" id="phone" required>
+		<br>
         <label>Gender</label>
-        <input type="radio" name="gender" th:value="'Male'" th:field="*{gender}" id="male">
+        <input type="radio" th:field="*{gender}" th:value="'Male'" id="male">
         <label for="male">Male</label>
-        <input type="radio" name="gender" th:value="'Female'" th:field="*{gender}" id="female">
+
+        <input type="radio" th:field="*{gender}" th:value="'Female'" id="female">
         <label for="female">Female</label>
         <br>
 
         <label for="dob">Date of Birth</label>
-        <input type="date" th:field="*{dateofbirth}" id="dob" required>
+        <input type="date" th:field="*{dateOfBirth}" id="dob" required>
         <br>
-        
-        <!-- Blood Type Dropdown -->
+
         <label for="bloodType">Blood Type</label>
-        <select id="bloodType" name="bloodTypeId">
-            <option value="">None</option>
-            <option th:each="bloodType : ${bloodTypes}" 
-                    th:value="${bloodType.id}" 
-                    th:text="${bloodType.bloodType}">
-            </option>
+        <select th:field="*{bloodTypeId}" id="bloodType" required>
+        		<option value="">None</option>
+            <option th:each="bt : ${bloodTypes}" th:value="${bt.id}" th:text="${bt.bloodType}"></option>
         </select>
         <br>
-        
+
         <label for="address">Address</label>
-        <textarea id="address" th:field="*{address}" rows="4" cols="50" required></textarea>
+        <textarea id="address" th:field="*{address}" rows="4" cols="50"></textarea>
         <br>
-        
-        <div th:if="${error}" style="color: red;">
-            <span th:text="${error}"></span>
-        </div>
-        
+		<label for="donateAgain">Would you like to donate again?</label><br>
+		<input type="radio" th:field="*{donateAgain}" id="donateYes" value="1" /> <label for="donateYes">Yes</label>
+		<input type="radio" th:field="*{donateAgain}" id="donateNo" value="0" /> <label for="donateNo">No</label>
+		<br>
         <input type="submit" value="Add">
     </form>
 </body>

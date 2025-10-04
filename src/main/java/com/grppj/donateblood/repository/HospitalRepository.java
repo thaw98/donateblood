@@ -1,10 +1,12 @@
 package com.grppj.donateblood.repository;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+
 import com.grppj.donateblood.model.HospitalBean;
-import java.util.List;
 
 @Repository
 public class HospitalRepository {
@@ -12,46 +14,18 @@ public class HospitalRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    // Get all hospitals
     public List<HospitalBean> getAllHospitals() {
         String sql = "SELECT * FROM hospital";
-        List<HospitalBean> list = jdbcTemplate.query(
-            sql,
-            (rs, rowNumber) -> new HospitalBean(
-                rs.getInt("id"),
-                rs.getString("hospital_name"),
-                rs.getString("address"),
-                rs.getString("contact")
-            )
-        );
-        return list;
+        return jdbcTemplate.query(sql, 
+            (rs, rowNum) -> {
+                HospitalBean h = new HospitalBean();
+                h.setId(rs.getInt("id"));
+                h.setHospitalName(rs.getString("hospital_name"));
+                h.setAddress(rs.getString("address"));
+                h.setPhone(rs.getString("contact")); // map 'contact' to 'phone'
+                return h;
+            });
     }
 
-    public HospitalBean getHospitalById(Integer hospitalId) {
-        String sql = "SELECT * FROM hospital WHERE id = ?";
-        HospitalBean obj = jdbcTemplate.queryForObject(
-            sql,
-            (rs, rowNum) -> new HospitalBean(
-                rs.getInt("id"),
-                rs.getString("hospital_name"),
-                rs.getString("address"),
-                rs.getString("contact")
-            ),
-            hospitalId
-        );
-        return obj;
-    }
-
-    public HospitalBean getDefaultHospital() {
-        String sql = "SELECT * FROM hospital ORDER BY id LIMIT 1";
-        HospitalBean obj = jdbcTemplate.queryForObject(
-            sql,
-            (rs, rowNum) -> new HospitalBean(
-                rs.getInt("id"),
-                rs.getString("hospital_name"),
-                rs.getString("address"),
-                rs.getString("contact")
-            )
-        );
-        return obj;
-    }
 }

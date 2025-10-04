@@ -6,12 +6,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
-public class DonationBean {
-    private Integer donationId;
-    private Integer bloodUnit;
-    private String donationDate;  // store as String to match DB TEXT/CHAR type
+public class DonorAppointmentBean {
+    private Integer id;
+    private String date;
+    private String time;
+    private String createdAt;
     private String status;
     private Integer userId;
-    private Integer userRoleId;
+    private Integer adminId;
     private Integer hospitalId;
+    private Integer bloodTypeId;
 }

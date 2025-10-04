@@ -1,27 +1,31 @@
 package com.grppj.donateblood.controller;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import com.grppj.donateblood.model.UserBean;
-import com.grppj.donateblood.model.HospitalBean;
+import org.springframework.web.bind.annotation.RequestMapping;
+
 import com.grppj.donateblood.model.BloodTypeBean;
 import com.grppj.donateblood.model.DonationBean;
-import com.grppj.donateblood.repository.UserRepository;
-import com.grppj.donateblood.repository.HospitalRepository;
+import com.grppj.donateblood.model.HospitalBean;
+import com.grppj.donateblood.model.UserBean;
 import com.grppj.donateblood.repository.BloodTypeRepository;
-import com.grppj.donateblood.repository.DonationRepository;
-import java.time.LocalDateTime;
-import java.util.List;
+import com.grppj.donateblood.repository.DonorRepository;
+import com.grppj.donateblood.repository.HospitalRepository;
 
 @Controller
+@RequestMapping("/admin")
 public class DonorController {
 
     @Autowired
-    private UserRepository userRepository;
+    private DonorRepository donorRepository;
 
     @Autowired
     private HospitalRepository hospitalRepository;
@@ -29,77 +33,59 @@ public class DonorController {
     @Autowired
     private BloodTypeRepository bloodTypeRepository;
 
-    @Autowired
-    private DonationRepository donationRepository;
-
+    // Show add donor form
     @GetMapping("/donors/add")
     public String showAddDonorForm(Model model) {
-        // Get default hospital (first hospital in the database)
-        HospitalBean hospital = hospitalRepository.getDefaultHospital();
-        
-        // Get all blood types for dropdown
-        List<BloodTypeBean> bloodTypes = bloodTypeRepository.getAllBloodTypes();
-        
-        model.addAttribute("donor", new UserBean());
+        HospitalBean hospital = hospitalRepository.getAllHospitals().get(0); // Use your hospital logic
+        UserBean donor = new UserBean();
+        donor.setDonateAgain(null); // <--- THIS LINE ensures no radio preselected
         model.addAttribute("hospital", hospital);
-        model.addAttribute("bloodTypes", bloodTypes);
-        
+        model.addAttribute("donor", donor);
+        model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
         return "add-donor-admin";
     }
 
+    // Handle donor submission and display all donors
     @PostMapping("/donors/add")
-    public String addDonor(@ModelAttribute UserBean donor, Model model) {
-        try {
-            // Set default password (you might want to generate a random one)
-            donor.setPassword("defaultPassword123");
-            
-            // Get donor role ID
-            Integer donorRoleId = userRepository.getDonorRoleId();
-            donor.setRoleId(donorRoleId);
-            
-            // Set username as email (or you can generate one)
-            donor.setUsername(donor.getEmail());
-            
-            // Save user to database
-            int userResult = userRepository.saveUser(donor);
-            
-            if (userResult > 0) {
-                // Get the newly created user to get the generated ID
-                UserBean savedUser = userRepository.getUserByEmail(donor.getEmail());
-                
-                // Get default hospital for donation record
-                HospitalBean hospital = hospitalRepository.getDefaultHospital();
-                
-                // Create donation record with status 'Used'
-                DonationBean donation = new DonationBean();
-                donation.setUserId(savedUser.getId());
-                donation.setUserRoleId(donorRoleId);
-                donation.setHospitalId(hospital.getId());
-                donation.setBloodUnit(1); // Default 1 unit
-                
-                // Save donation record
-                int donationResult = donationRepository.saveDonation(donation);
-                
-                if (donationResult > 0) {
-                    // Get the submission date and time
-                    LocalDateTime submissionDateTime = LocalDateTime.now();
-                    
-                    // Add data to model for display
-                    model.addAttribute("donor", savedUser);
-                    model.addAttribute("hospital", hospital);
-                    model.addAttribute("submissionDateTime", submissionDateTime);
-                    model.addAttribute("donation", donationRepository.getDonationById(donation.getDonationId()));
-                    
-                    return "donor-add-success";
-                }
-            }
-            
-            model.addAttribute("error", "Failed to add donor. Please try again.");
-            return "add-donor-admin";
-            
-        } catch (Exception e) {
-            model.addAttribute("error", "An error occurred: " + e.getMessage());
-            return "add-donor-admin";
-        }
+    public String addDonor(@ModelAttribute("donor") UserBean donor, Model model) {
+        donor.setRoleId(2); // Set to actual Donor role id
+
+        // 1. Insert new user and get new user id
+        int userId = donorRepository.addDonor(donor);
+
+        // 2. Prepare and insert DonationBean
+        DonationBean donation = new DonationBean();
+        donation.setBloodUnit(1); // set from your logic or form
+        donation.setDonationDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        donation.setStatus("Available");
+        donation.setUserId(userId);
+        donation.setUserRoleId(donor.getRoleId());
+        donation.setHospitalId(1); // use your actual hospital selection
+
+        donorRepository.addDonation(donation);
+
+        // 3. Get blood type name for output
+        BloodTypeBean bloodType = bloodTypeRepository.getBloodTypeById(donor.getBloodTypeId());
+
+        // 4. Get all donors to display as a list/table
+        List<UserBean> donorList = donorRepository.getAllDonors();
+
+        HospitalBean hospital = hospitalRepository.getAllHospitals().get(0);
+
+        model.addAttribute("submissionDateTime", donation.getDonationDate());
+        model.addAttribute("donor", donor);
+        model.addAttribute("bloodTypeName", bloodType.getBloodType());
+        model.addAttribute("hospital", hospital);
+        model.addAttribute("donorList", donorList);
+
+        return "redirect:/admin/donors";
     }
+    @GetMapping("/donors")
+    public String showDonorList(Model model) {
+        List<UserBean> donorList = donorRepository.getAllDonorsWithStatus();
+        model.addAttribute("donorList", donorList);
+        return "donor-list"; // This should be your new Thymeleaf template
+    }
+    
+    
 }
