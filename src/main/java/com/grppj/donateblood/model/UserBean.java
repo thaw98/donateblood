@@ -1,5 +1,9 @@
 package com.grppj.donateblood.model;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +25,7 @@ public class UserBean {
     private String hospitalName;
     private Integer donateAgain;
 
+    private Integer age;
     
     // Getters and setters
     // ...

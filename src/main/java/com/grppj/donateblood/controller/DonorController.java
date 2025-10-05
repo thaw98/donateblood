@@ -1,14 +1,20 @@
 package com.grppj.donateblood.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +28,8 @@ import com.grppj.donateblood.model.UserBean;
 import com.grppj.donateblood.repository.BloodTypeRepository;
 import com.grppj.donateblood.repository.DonorRepository;
 import com.grppj.donateblood.repository.HospitalRepository;
+
+import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/admin")
@@ -47,7 +55,10 @@ public class DonorController {
         bloodTypeMap.put(7, "O+");
         bloodTypeMap.put(8, "O-");
     }
-
+    
+    private static final Pattern EMAIL_RE =
+    	    Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    
     // Show add donor form
     @GetMapping("/donors/add")
     public String showAddDonorForm(Model model) {
@@ -57,12 +68,99 @@ public class DonorController {
         model.addAttribute("hospital", hospital);
         model.addAttribute("donor", donor);
         model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
+        //Block picking date under 18 y/o
+        model.addAttribute("maxDob", LocalDate.now().minusYears(18).format(DateTimeFormatter.ISO_DATE));
         return "add-donor-admin";
     }
 
     // Handle donor submission and display all donors
     @PostMapping("/donors/add")
-    public String addDonor(@ModelAttribute("donor") UserBean donor, Model model) {
+    public String addDonor(@Valid @ModelAttribute("donor") UserBean donor, BindingResult bindingResult, Model model) {
+        // ---- Manual required checks (no var, no annotations) ----
+        String username = donor.getUsername();
+        if (username == null || username.trim().isEmpty()) {
+            bindingResult.addError(new FieldError("donor", "username", "Username is required."));
+        }
+
+        // --- EMAIL: required + regex + duplicate; keep rejected value visible ---
+        String rawEmail = donor.getEmail();
+        String email = (rawEmail == null) ? "" : rawEmail.trim();
+
+        if (email.isEmpty()) {
+            bindingResult.addError(new FieldError(
+                "donor", "email", email, false, null, null, "Email is required."));
+        } else if (!EMAIL_RE.matcher(email).matches()) {
+            bindingResult.addError(new FieldError(
+                "donor", "email", email, false, null, null, "Please enter a valid email address."));
+        } else if (donorRepository.emailExists(email)) {
+            bindingResult.addError(new FieldError(
+                "donor", "email", email, false, null, null, "This email is already registered."));
+        }
+
+
+        // If any error -> re-render the form with messages
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("hospital", hospitalRepository.getAllHospitals().get(0));
+            model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
+            return "add-donor-admin";
+        }
+        
+        // add previous value back
+        donor.setEmail(email);
+
+        String phone = donor.getPhone();
+        if (phone == null || phone.trim().isEmpty()) {
+            bindingResult.addError(new FieldError("donor", "phone", "Phone is required."));
+        } else if (!phone.trim().matches("\\d{9,15}")) {
+            bindingResult.addError(new FieldError("donor", "phone", "Phone must be 9–15 digits."));
+        }
+
+        String gender = donor.getGender();
+        if (gender == null || gender.trim().isEmpty()) {
+            bindingResult.addError(new FieldError("donor", "gender", "Gender is required."));
+        }
+
+        String dobStr = donor.getDateOfBirth();
+        if (dobStr == null || dobStr.trim().isEmpty()) {
+            bindingResult.addError(new FieldError("donor", "dateOfBirth", "Date of birth is required."));
+        } else {
+            try {
+                java.time.LocalDate dob = java.time.LocalDate.parse(
+                        dobStr, java.time.format.DateTimeFormatter.ISO_DATE);
+                int age = java.time.Period.between(dob, java.time.LocalDate.now()).getYears();
+                if (age < 18) {
+                    bindingResult.addError(new FieldError("donor", "dateOfBirth",
+                            "Donor must be at least 18 years old."));
+                }
+            } catch (java.time.format.DateTimeParseException ex) {
+                bindingResult.addError(new FieldError("donor", "dateOfBirth",
+                        "Invalid date format (yyyy-MM-dd)."));
+            }
+        }
+
+        Integer bloodTypeId = donor.getBloodTypeId();
+        if (bloodTypeId == null) {
+            bindingResult.addError(new FieldError("donor", "bloodTypeId", "Blood type is required."));
+        }
+
+        String address = donor.getAddress();
+        if (address == null || address.trim().isEmpty()) {
+            bindingResult.addError(new FieldError("donor", "address", "Address is required."));
+        }
+
+        Integer donateAgain = donor.getDonateAgain();
+        if (donateAgain == null) {
+            bindingResult.addError(new FieldError("donor", "donateAgain",
+                    "Please choose whether you would like to donate or not."));
+        }
+
+        // If any errors, re-render the form (no redirect)
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("hospital", hospitalRepository.getAllHospitals().get(0));
+            model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
+            return "add-donor-admin";
+        }
+
         donor.setRoleId(2); // Set to actual Donor role id
 
         // 1. Insert new user and get new user id

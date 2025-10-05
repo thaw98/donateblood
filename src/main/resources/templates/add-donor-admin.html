@@ -3,51 +3,214 @@
 <head>
 <meta charset="UTF-8">
 <title>Add Donor</title>
+<style>
+  .error { color:red; margin-top:4px; font-size:.9rem; }
+  .field-error { border-color:red; }
+  .hidden { display:none; }
+</style>
 </head>
 <body>
-    <form th:action="@{/admin/donors/add}" th:object="${donor}" method="post">
-        <h1>Add Donor - Admin Dashboard</h1>
+<form th:action="@{/admin/donors/add}" th:object="${donor}" method="post" id="donorForm" novalidate>
+  <h1>Add Donor - Admin Dashboard</h1>
 
-        <!-- Show currently selected hospital name -->
-        <p><strong>Hospital Name:</strong> <span th:text="${hospital.hospitalName}"></span></p>
+  <p><strong>Hospital Name:</strong> <span th:text="${hospital.hospitalName}"></span></p>
 
-        <label for="username">Username</label>
-        <input type="text" th:field="*{username}" id="username" required>
-        <br>
-
-        <label for="email">Email</label>
-        <input type="email" th:field="*{email}" id="email" required>
-        <br>
-		<label for="phone">Phone Number</label>
-		<input type="text" th:field="*{phone}" id="phone" required>
+		<label for="username">Username</label>
+		<input type="text" th:field="*{username}" id="username"
+		       th:classappend="${#fields.hasErrors('username')} ? 'field-error'">
+		<div id="err-username"
+		     class="error"
+		     th:classappend="${#fields.hasErrors('username')} ? '' : 'hidden'"
+		     data-default="Username is required.">
+		  <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+		</div>
 		<br>
-        <label>Gender</label>
-        <input type="radio" th:field="*{gender}" th:value="'Male'" id="male">
-        <label for="male">Male</label>
 
-        <input type="radio" th:field="*{gender}" th:value="'Female'" id="female">
-        <label for="female">Female</label>
-        <br>
+	 <label for="email">Email</label>
+	<input type="email" th:field="*{email}" id="email"
+	       th:classappend="${#fields.hasErrors('email')} ? 'field-error'">
+	<div id="err-email" class="error"
+	     th:classappend="${#fields.hasErrors('email')} ? '' : 'hidden'"
+	     data-default="Email is required.">
+	  <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+	</div>
+	<br>
+	
+	<label for="phone">Phone Number</label>
+	<input type="text" th:field="*{phone}" id="phone"
+	       th:classappend="${#fields.hasErrors('phone')} ? 'field-error'">
+	<div id="err-phone" class="error"
+	     th:classappend="${#fields.hasErrors('phone')} ? '' : 'hidden'"
+	     data-default="Phone is required."
+	     data-invalid="Phone must be 9–15 digits.">
+	  <span th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+	</div>
+	<br>
+	
+	<label>Gender</label>
+	<input type="radio" th:field="*{gender}" th:value="'Male'" id="male"><label for="male">Male</label>
+	<input type="radio" th:field="*{gender}" th:value="'Female'" id="female"><label for="female">Female</label>
+	<div id="err-gender" class="error"
+	     th:classappend="${#fields.hasErrors('gender')} ? '' : 'hidden'"
+	     data-default="Gender is required.">
+	  <span th:if="${#fields.hasErrors('gender')}" th:errors="*{gender}"></span>
+	</div>
+	<br>
+	
+	<label for="dob">Date of Birth</label>
+	<input type="date" th:field="*{dateOfBirth}" id="dob"
+	       th:classappend="${#fields.hasErrors('dateOfBirth')} ? 'field-error'">
+	<div id="err-dateOfBirth" class="error"
+	     th:classappend="${#fields.hasErrors('dateOfBirth')} ? '' : 'hidden'"
+	     data-default="Date of birth is required."
+	     data-underage="Donor must be at least 18 years old.">
+	  <span th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></span>
+	</div>
+	<br>
+	
+	<label for="bloodType">Blood Type</label>
+	<select th:field="*{bloodTypeId}" id="bloodType"
+	        th:classappend="${#fields.hasErrors('bloodTypeId')} ? 'field-error'">
+	  <option value="">None</option>
+	  <option th:each="bt : ${bloodTypes}" th:value="${bt.id}" th:text="${bt.bloodType}"></option>
+	</select>
+	<div id="err-bloodTypeId" class="error"
+	     th:classappend="${#fields.hasErrors('bloodTypeId')} ? '' : 'hidden'"
+	     data-default="Blood type is required.">
+	  <span th:if="${#fields.hasErrors('bloodTypeId')}" th:errors="*{bloodTypeId}"></span>
+	</div>
+	<br>
+	
+	<label for="address">Address</label>
+	<textarea id="address" th:field="*{address}" rows="4" cols="50"
+	          th:classappend="${#fields.hasErrors('address')} ? 'field-error'"></textarea>
+	<div id="err-address" class="error"
+	     th:classappend="${#fields.hasErrors('address')} ? '' : 'hidden'"
+	     data-default="Address is required.">
+	  <span th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></span>
+	</div>
+	<br>
+	
+	<label>Would you like to donate again?</label><br>
+	<input type="radio" th:field="*{donateAgain}" id="donateYes" value="1" />
+	<label for="donateYes">Yes</label>
+	<input type="radio" th:field="*{donateAgain}" id="donateNo" value="0" />
+	<label for="donateNo">No</label>
+	<div id="err-donateAgain" class="error"
+	     th:classappend="${#fields.hasErrors('donateAgain')} ? '' : 'hidden'"
+	     data-default="Please choose whether you would like to donate or not.">
+	  <span th:if="${#fields.hasErrors('donateAgain')}" th:errors="*{donateAgain}"></span>
+	</div>
+	<br>
 
-        <label for="dob">Date of Birth</label>
-        <input type="date" th:field="*{dateOfBirth}" id="dob" required>
-        <br>
 
-        <label for="bloodType">Blood Type</label>
-        <select th:field="*{bloodTypeId}" id="bloodType" required>
-        		<option value="">None</option>
-            <option th:each="bt : ${bloodTypes}" th:value="${bt.id}" th:text="${bt.bloodType}"></option>
-        </select>
-        <br>
+  <input type="submit" value="Add">
+</form>
 
-        <label for="address">Address</label>
-        <textarea id="address" th:field="*{address}" rows="4" cols="50"></textarea>
-        <br>
-		<label for="donateAgain">Would you like to donate again?</label><br>
-		<input type="radio" th:field="*{donateAgain}" id="donateYes" value="1" /> <label for="donateYes">Yes</label>
-		<input type="radio" th:field="*{donateAgain}" id="donateNo" value="0" /> <label for="donateNo">No</label>
-		<br>
-        <input type="submit" value="Add">
-    </form>
+<script>
+(function () {
+  const $  = (s, c=document) => c.querySelector(s);
+  const $$ = (s, c=document) => Array.from(c.querySelectorAll(s));
+
+  // === Email regex (ASCII) ===
+  const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+  // --- helpers ---
+  function show(id, msgKey) {
+    const box = $('#'+id);
+    if (!box) return;
+    const span = box.querySelector('span');
+    const fallback = (msgKey && box.dataset[msgKey]) || box.dataset.default || '';
+    if (!span) box.textContent = fallback;
+    else if (!span.textContent.trim()) span.textContent = fallback;
+    box.classList.remove('hidden');
+  }
+  function hide(id) { const box = $('#'+id); if (box) box.classList.add('hidden'); }
+  function addErr(sel) { $$(sel).forEach(el => el.classList.add('field-error')); }
+  function rmErr(sel)  { $$(sel).forEach(el => el.classList.remove('field-error')); }
+
+  // --- validators (mirror server rules) ---
+  const validators = {
+    username: () => $('#username').value.trim().length > 0,
+    emailReq: () => $('#email').value.trim().length > 0,
+    emailOk:  () => EMAIL_RE.test($('#email').value.trim()),
+    phoneReq: () => $('#phone').value.trim().length > 0,
+    phoneOk:  () => /^\d{9,15}$/.test($('#phone').value.trim()),
+    gender:   () => !!document.querySelector('input[name="gender"]:checked'),
+    dobReq:   () => !!$('#dob').value,
+    dobOk:    () => {
+      const v = $('#dob').value;
+      if (!v) return false;
+      const d = new Date(v); if (isNaN(d)) return false;
+      const t = new Date();
+      const min = new Date(t.getFullYear()-18, t.getMonth(), t.getDate());
+      return d <= min;
+    },
+    bloodType:() => $('#bloodType').value !== '',
+    address:  () => $('#address').value.trim().length > 0,
+    donate:   () => !!document.querySelector('input[name="donateAgain"]:checked')
+  };
+
+  let submitted = false;
+
+  // live hide AFTER first submit attempt
+  function liveHide(selector, checkFn, errId) {
+    $$(selector).forEach(el => {
+      const handler = () => {
+        if (!submitted) return;
+        if (checkFn()) { hide(errId); rmErr(selector); }
+      };
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    liveHide('#username',  validators.username,  'err-username');
+    liveHide('#email',     () => validators.emailReq() && validators.emailOk(), 'err-email');
+    liveHide('#phone',     () => validators.phoneReq() && validators.phoneOk(), 'err-phone');
+    liveHide('input[name="gender"]', validators.gender, 'err-gender');
+    liveHide('#dob',       () => validators.dobReq() && validators.dobOk(), 'err-dateOfBirth');
+    liveHide('#bloodType', validators.bloodType, 'err-bloodTypeId');
+    liveHide('#address',   validators.address,  'err-address');
+    liveHide('input[name="donateAgain"]', validators.donate, 'err-donateAgain');
+
+    $('#donorForm').addEventListener('submit', (e) => {
+      submitted = true;
+      let ok = true;
+
+      if (!validators.username()) { ok=false; addErr('#username'); show('err-username'); }
+
+      if (!validators.emailReq()) {
+        ok=false; addErr('#email'); show('err-email');                 // required
+      } else if (!validators.emailOk()) {
+        ok=false; addErr('#email'); show('err-email','invalid');       // regex format
+      }
+
+      if (!validators.phoneReq()) {
+        ok=false; addErr('#phone'); show('err-phone');                 // required
+      } else if (!validators.phoneOk()) {
+        ok=false; addErr('#phone'); show('err-phone','invalid');       // digits rule
+      }
+
+      if (!validators.gender()) { ok=false; addErr('input[name="gender"]'); show('err-gender'); }
+
+      if (!validators.dobReq()) {
+        ok=false; addErr('#dob'); show('err-dateOfBirth');             // required
+      } else if (!validators.dobOk()) {
+        ok=false; addErr('#dob'); show('err-dateOfBirth','underage');  // 18+ rule
+      }
+
+      if (!validators.bloodType()) { ok=false; addErr('#bloodType'); show('err-bloodTypeId'); }
+      if (!validators.address())   { ok=false; addErr('#address');   show('err-address'); }
+      if (!validators.donate())    { ok=false; addErr('input[name="donateAgain"]'); show('err-donateAgain'); }
+
+      if (!ok) e.preventDefault(); // stay on page until all fields are valid
+    });
+  });
+})();
+</script>
+
+
 </body>
 </html>

@@ -134,5 +134,11 @@ public class DonorRepository {
         // return total number of rows affected (you can change this as needed)
         return rowsUser + rowsDonation;
     }
+    
+    public boolean emailExists(String email) {
+        String sql = "SELECT COUNT(*) FROM user WHERE LOWER(email) = LOWER(?)";
+        Integer cnt = jdbcTemplate.queryForObject(sql, Integer.class, email);
+        return cnt != null && cnt > 0;
+    }
 
 }
