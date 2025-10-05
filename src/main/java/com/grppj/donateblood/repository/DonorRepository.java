@@ -19,8 +19,18 @@ public class DonorRepository {
 
     // Add a new user (donor)
     public int addDonor(UserBean user) {
-    	   	String sql = "INSERT INTO user (username, email, password, gender, dateofbirth, address, phone, role_id, donate_again) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    	    jdbcTemplate.update(sql, user.getUsername(), user.getEmail(), user.getPassword(), user.getGender(), user.getDateOfBirth(), user.getAddress(), user.getPhone(), user.getRoleId(), user.getDonateAgain());
+    	   	String sql = "INSERT INTO user (username, email, password, gender, dateofbirth, address, phone, blood_type_id, role_id, donate_again) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    	    jdbcTemplate.update(sql, 
+    	    		user.getUsername(), 
+    	    		user.getEmail(), 
+    	    		user.getPassword(), 
+    	    		user.getGender(), 
+    	    		user.getDateOfBirth(), 
+    	    		user.getAddress(), 
+    	    		user.getPhone(), 
+    	    		user.getBloodTypeId(),
+    	    		user.getRoleId(), 
+    	    		user.getDonateAgain());
         // Get the new user's id for use in donation
         return jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Integer.class);
     }
@@ -51,6 +61,8 @@ public class DonorRepository {
             user.setDateOfBirth(rs.getString("dateofbirth"));
             user.setAddress(rs.getString("address"));
             user.setDonateAgain(rs.getInt("donate_again"));
+            Object bt = rs.getObject("blood_type_id");
+            user.setBloodTypeId(bt == null ? null : rs.getInt("blood_type_id")); // <-- add
             // ... add any other needed fields
             return user;
         });
@@ -73,6 +85,8 @@ public class DonorRepository {
             user.setRoleId(rs.getInt("role_id"));
             user.setStatus(rs.getString("status")); // Add this setter in UserBean
             user.setDonateAgain(rs.getInt("donate_again"));
+            Object bt = rs.getObject("blood_type_id");
+            user.setBloodTypeId(bt == null ? null : rs.getInt("blood_type_id")); // <-- add
             return user;
         });
     }
@@ -95,6 +109,8 @@ public class DonorRepository {
             user.setStatus(rs.getString("status"));
             user.setHospitalName(rs.getString("hospital_name"));
             user.setDonateAgain(rs.getInt("donate_again"));
+            Object bt = rs.getObject("blood_type_id");
+            user.setBloodTypeId(bt == null ? null : rs.getInt("blood_type_id")); // <-- add
             return user;
         });
     }

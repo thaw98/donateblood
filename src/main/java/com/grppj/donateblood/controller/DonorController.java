@@ -2,7 +2,9 @@ package com.grppj.donateblood.controller;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -33,6 +35,18 @@ public class DonorController {
 
     @Autowired
     private BloodTypeRepository bloodTypeRepository;
+    
+    private static Map<Integer, String> bloodTypeMap = new HashMap<>();
+    static {
+        bloodTypeMap.put(1, "A+");
+        bloodTypeMap.put(2, "A-");
+        bloodTypeMap.put(3, "B+");
+        bloodTypeMap.put(4, "B-");
+        bloodTypeMap.put(5, "AB+");
+        bloodTypeMap.put(6, "AB-");
+        bloodTypeMap.put(7, "O+");
+        bloodTypeMap.put(8, "O-");
+    }
 
     // Show add donor form
     @GetMapping("/donors/add")
@@ -85,6 +99,7 @@ public class DonorController {
     public String showDonorList(Model model) {
         List<UserBean> donorList = donorRepository.getAllDonorsWithStatus();
         model.addAttribute("donorList", donorList);
+        model.addAttribute("bloodTypeMap", bloodTypeMap);
         return "donor-list"; // This should be your new Thymeleaf template
     }
     
@@ -92,6 +107,7 @@ public class DonorController {
     public String showEditDonorForm(@PathVariable("id") int id, Model model) {
         UserBean donor = donorRepository.getDonorById(id);  // Add this method
         model.addAttribute("donor", donor);
+        model.addAttribute("bloodTypeMap", bloodTypeMap);
         model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
         model.addAttribute("hospitals", hospitalRepository.getAllHospitals());
         return "edit-donor-admin";  // new Thymeleaf template for editing donor

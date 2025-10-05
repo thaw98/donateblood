@@ -7,6 +7,15 @@
 <body>
     <h1>Edit Donor</h1>
     <form th:action="@{/admin/donors/update}" th:object="${donor}" method="post">
+        <label>Donor Name:</label>
+        <span th:text="*{username}"></span>
+        <br>
+        <label>Gender:</label>
+		<span th:text="*{gender}"></span>
+		<br>
+		<label>Blood Type:</label>
+		<span th:text="${donor.bloodTypeId != null ? bloodTypeMap[donor.bloodTypeId] : 'Unknown'}"></span>
+		<br>
         <label for="phone">Phone Number</label>
         <input type="text" th:field="*{phone}" id="phone" required />
         <br>
@@ -17,8 +26,8 @@
         </select>
         <br>
         <label>Donate Again?</label>
-        <input type="radio" th:field="*{donateAgain}" value="1" /> Yes
-        <input type="radio" th:field="*{donateAgain}" value="0" /> No
+        <input type="radio" th:field="*{donateAgain}" id="donateYes" value="1" /> <label for="donateYes">Yes</label>
+        <input type="radio" th:field="*{donateAgain}" id="donateNo" value="0" /> <label for="donateNo">No</label>
         <br>
         <input type="hidden" th:field="*{id}" />
         <input type="submit" value="Update" />

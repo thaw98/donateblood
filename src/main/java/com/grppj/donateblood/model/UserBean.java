@@ -21,6 +21,8 @@ public class UserBean {
     private String hospitalName;
     private Integer donateAgain;
 
+    
     // Getters and setters
     // ...
+    
 }

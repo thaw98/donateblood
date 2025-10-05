@@ -10,6 +10,7 @@
     <tr>
     		<th>No.</th>
         <th>Username</th>
+        <th>Blood Type</th>
         <th>Email</th>
         <th>Phone</th>
         <th>Gender</th>
@@ -23,6 +24,7 @@
 	<tr th:each="d, no : ${donorList}">
 	    <td th:text="${no.count}"></td> 
 	    <td th:text="${d.username}"></td>
+	    <td th:text="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : 'Unknown'}"></td>
 	    <td th:text="${d.email}"></td>
 	    <td th:text="${d.phone}"></td>
 	    <td th:text="${d.gender}"></td>
