@@ -5,38 +5,163 @@
 <title>All Donors</title>
 </head>
 <body>
-<h2>All Donors</h2>
-<table border="1">
-    <tr>
-    		<th>No.</th>
-        <th>Username</th>
-        <th>Blood Type</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>Gender</th>
-        <th>Date of Birth</th>
-        <th>Address</th>
-        <th>Status</th>
-        <th>Donate Again?</th>
-        <th>Action</th>
-        <!-- Add other columns as needed -->
-    </tr>
-	<tr th:each="d, no : ${donorList}">
-	    <td th:text="${no.count}"></td> 
-	    <td th:text="${d.username}"></td>
-	    <td th:text="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : 'Unknown'}"></td>
-	    <td th:text="${d.email}"></td>
-	    <td th:text="${d.phone}"></td>
-	    <td th:text="${d.gender}"></td>
-	    <td th:text="${d.dateOfBirth}"></td>
-	    <td th:text="${d.address}"></td>
-	    <td th:text="${d.status}"></td>
-	    <td th:text="${d.donateAgain == 1 ? 'Yes' : 'No'}"></td>
-	    <td>
-	    		<a th:href="@{/admin/donors/edit/{id}(id=${d.id})}">Edit</a>
-		</td>
-	</tr>
+	<h2>All Donors</h2>
+	<!-- Filter/Search toolbar -->
+	<div style="margin:10px 0; display:flex; gap:8px; align-items:center;">
+	  <input id="q" type="search" placeholder="Search name or email…" autocomplete="off" style="padding:6px; width:240px;">
+	<select id="btFilter" style="padding:6px;">
+	  <option value="">All blood types</option>
+	  <option th:each="e : ${bloodTypeMap.entrySet()}"
+	          th:value="${e.key}"
+	          th:text="${e.value}">
+	  </option>
+	</select>
+	<select id="statusFilter" style="padding:6px;">
+	  <option value="">All statuses</option>
+	  <option value="available">Available</option>
+	  <option value="used">Used</option>
+	</select>
+	<select id="donateAgainFilter" style="padding:6px;">
+	  <option value="">Donate Again?</option>
+	  <option value="1">Yes</option>
+	  <option value="0">No</option>
+	</select>
 
+
+  <button type="button" id="clearFilters" style="padding:6px;">Clear</button>
+  <span id="matchCount" style="margin-left:8px; color:#555;"></span>
+</div>
+<table id="donorTable" border="1">
+  <tr>
+    <th>No.</th>
+    <th>Username</th>
+    <th>Blood Type</th>
+    <th>Age</th> 
+    <th>Email</th>
+    <th>Phone</th>
+    <th>Gender</th>
+    <th>Date of Birth</th>
+    <th>Address</th>
+    <th>Status</th>
+    <th>Donate Again?</th>
+    <th>Action</th>
+  </tr>
+
+	<tr th:each="d, no : ${donorList}"
+	    th:data-name="${d.username}"
+	    th:data-email="${d.email}"
+	    th:data-btid="${d.bloodTypeId}"
+	    th:data-bt="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : null}"
+	    th:data-status="${d.status}"
+	    th:data-donate-again="${d.donateAgain}">
+
+
+    <td th:text="${no.count}"></td>
+    <td th:text="${d.username}"></td>
+    <td th:text="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : 'Unknown'}"></td>
+ 	<td th:text="${#strings.isEmpty(d.dateOfBirth) ? '' : T(java.time.Period).between(T(java.time.LocalDate).parse(d.dateOfBirth), T(java.time.LocalDate).now()).getYears()}"></td>
+
+    <td th:text="${d.email}"></td>
+    <td th:text="${d.phone}"></td>
+    <td th:text="${d.gender}"></td>
+    <td th:text="${d.dateOfBirth}"></td>
+    <td th:text="${d.address}"></td>
+    <td th:text="${d.status}"></td>
+    <td th:text="${d.donateAgain == 1 ? 'Yes' : 'No'}"></td>
+    <td><a th:href="@{/admin/donors/edit/{id}(id=${d.id})}">Edit</a></td>
+  </tr>
+
+  <!-- optional 'no results' row -->
+  <tr id="noRows" style="display:none;">
+    <td colspan="11" style="text-align:center; color:#666;">No matching donors</td>
+  </tr>
 </table>
 </body>
+<script>
+(function () {
+  const $  = (s, c=document) => c.querySelector(s);
+  const $$ = (s, c=document) => Array.from(c.querySelectorAll(s));
+
+  const qInput   = $('#q');                 // search box
+  const btSelect = $('#btFilter');          // blood type dropdown
+  const stSelect = $('#statusFilter');      // status dropdown
+  const daSelect = $('#donateAgainFilter'); // donate again dropdown
+  const clearBtn = $('#clearFilters');      // clear button
+  const countEl  = $('#matchCount');        // "X matches" label (optional)
+  const noRows   = $('#noRows');            // "No matching donors" row (optional)
+
+  // all data rows (skip header and optional noRows)
+  const rows = $$('#donorTable tr').filter(tr =>
+    tr.rowIndex !== 0 && tr.id !== 'noRows'
+  );
+
+  const normalize = s => (s || '').toString().trim().toLowerCase();
+
+  function matches(row, q, bt, st, da) {
+    const name  = normalize(row.dataset.name);
+    const email = normalize(row.dataset.email);
+    const text  = name + ' ' + email;
+
+    const okSearch = !q || text.includes(q);
+
+    // blood type by id only
+    const rowBtId = (row.dataset.btid || '').toString();
+    const okBt = !bt || rowBtId === bt;
+
+    // status: normalize to lowercase
+    const rowSt = normalize(row.dataset.status);
+    const okSt = !st || rowSt === st;
+
+    // donateAgain: "1" or "0"
+    const rowDa = (row.dataset.donateAgain || '').toString();
+    const okDa = !da || rowDa === da;
+
+    return okSearch && okBt && okSt && okDa;
+  }
+
+  function debounce(fn, ms) {
+    let t; return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
+  }
+
+  function applyFilters() {
+    const q  = normalize(qInput?.value);
+    const bt = btSelect?.value || '';              // "" | "1".."8"
+    const st = normalize(stSelect?.value || '');   // "" | "available" | "used"
+    const da = (daSelect?.value || '').toString(); // "" | "1" | "0"
+    let visible = 0;
+
+    rows.forEach(tr => {
+      if (matches(tr, q, bt, st, da)) {
+        tr.style.display = '';
+        visible++;
+      } else {
+        tr.style.display = 'none';
+      }
+    });
+
+    if (countEl) countEl.textContent = visible ? `${visible} match${visible > 1 ? 'es' : ''}` : '';
+    if (noRows) noRows.style.display = visible ? 'none' : '';
+  }
+
+  const update = debounce(applyFilters, 120);
+
+  if (qInput)   qInput.addEventListener('input', update);
+  if (btSelect) btSelect.addEventListener('change', applyFilters);
+  if (stSelect) stSelect.addEventListener('change', applyFilters);
+  if (daSelect) daSelect.addEventListener('change', applyFilters);
+  if (clearBtn) clearBtn.addEventListener('click', () => {
+    if (qInput)   qInput.value = '';
+    if (btSelect) btSelect.value = '';
+    if (stSelect) stSelect.value = '';
+    if (daSelect) daSelect.value = '';
+    applyFilters();
+    if (qInput) qInput.focus();
+  });
+
+  // initial run
+  applyFilters();
+})();
+</script>
+
+
 </html>
