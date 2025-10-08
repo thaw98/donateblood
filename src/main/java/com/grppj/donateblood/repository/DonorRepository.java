@@ -6,9 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.grppj.donateblood.model.BloodTypeBean;
 import com.grppj.donateblood.model.DonationBean;
-import com.grppj.donateblood.model.HospitalBean;
 import com.grppj.donateblood.model.UserBean;
 
 @Repository
@@ -50,7 +48,7 @@ public class DonorRepository {
 
     }
     public List<UserBean> getAllDonors() {
-        String sql = "SELECT * FROM user WHERE role_id = 2"; // assumes 2 is donor role
+        String sql = "SELECT * FROM user WHERE role_id = 2"; // Donor role is 2 (this is from my side, just notes for code combining)
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             UserBean user = new UserBean();
             user.setId(rs.getInt("id"));
@@ -62,11 +60,9 @@ public class DonorRepository {
             user.setAddress(rs.getString("address"));
             user.setDonateAgain(rs.getInt("donate_again"));
             Object bt = rs.getObject("blood_type_id");
-            user.setBloodTypeId(bt == null ? null : rs.getInt("blood_type_id")); // <-- add
-            // ... add any other needed fields
+            user.setBloodTypeId(bt == null ? null : rs.getInt("blood_type_id"));
             return user;
         });
-    // More methods for get/update can be added as needed using same pattern
     }
     public List<UserBean> getAllDonorsWithStatus() {
         String sql = "SELECT u.*, d.status FROM user u " +
@@ -83,7 +79,7 @@ public class DonorRepository {
             user.setAddress(rs.getString("address"));
             user.setPhone(rs.getString("phone"));
             user.setRoleId(rs.getInt("role_id"));
-            user.setStatus(rs.getString("status")); // Add this setter in UserBean
+            user.setStatus(rs.getString("status"));
             user.setDonateAgain(rs.getInt("donate_again"));
             Object bt = rs.getObject("blood_type_id");
             user.setBloodTypeId(bt == null ? null : rs.getInt("blood_type_id")); // <-- add
@@ -131,7 +127,7 @@ public class DonorRepository {
             donor.getId()
         );
 
-        // return total number of rows affected (you can change this as needed)
+        // return total number of rows affected
         return rowsUser + rowsDonation;
     }
     

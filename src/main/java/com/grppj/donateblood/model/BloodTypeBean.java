@@ -10,6 +10,4 @@ public class BloodTypeBean {
     private Integer id;
     private String bloodType;
 
-    // Getters and setters
-    // ...
 }

@@ -9,7 +9,7 @@ import lombok.Setter;
 public class DonationBean {
     private Integer donationId;
     private Integer bloodUnit;
-    private String donationDate;  // store as String to match DB TEXT/CHAR type
+    private String donationDate;
     private String status;
     private Integer userId;
     private Integer userRoleId;

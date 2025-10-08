@@ -2,9 +2,7 @@ package com.grppj.donateblood.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,13 +74,13 @@ public class DonorController {
     // Handle donor submission and display all donors
     @PostMapping("/donors/add")
     public String addDonor(@Valid @ModelAttribute("donor") UserBean donor, BindingResult bindingResult, Model model) {
-        // ---- Manual required checks (no var, no annotations) ----
+        // Error handling - Username
         String username = donor.getUsername();
         if (username == null || username.trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "username", "Username is required."));
         }
 
-        // --- EMAIL: required + regex + duplicate; keep rejected value visible ---
+        // Error handling - Email
         String rawEmail = donor.getEmail();
         String email = (rawEmail == null) ? "" : rawEmail.trim();
 
@@ -105,21 +103,21 @@ public class DonorController {
             return "add-donor-admin";
         }
         
-        // add previous value back
+        // add previous value back, if error occur
         donor.setEmail(email);
-
+        //Error handling - Phone
         String phone = donor.getPhone();
         if (phone == null || phone.trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "phone", "Phone is required."));
         } else if (!phone.trim().matches("\\d{9,15}")) {
             bindingResult.addError(new FieldError("donor", "phone", "Phone must be 9–15 digits."));
         }
-
+        //Error handling - Gender
         String gender = donor.getGender();
         if (gender == null || gender.trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "gender", "Gender is required."));
         }
-
+        //Error handling - DOB, Must be over 18, Validation real date format
         String dobStr = donor.getDateOfBirth();
         if (dobStr == null || dobStr.trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "dateOfBirth", "Date of birth is required."));
@@ -137,17 +135,17 @@ public class DonorController {
                         "Invalid date format (yyyy-MM-dd)."));
             }
         }
-
+        // Error handling - Blood Type
         Integer bloodTypeId = donor.getBloodTypeId();
         if (bloodTypeId == null) {
             bindingResult.addError(new FieldError("donor", "bloodTypeId", "Blood type is required."));
         }
-
+        //Error handling - Address
         String address = donor.getAddress();
         if (address == null || address.trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "address", "Address is required."));
         }
-
+        //Error handling - Donate Again
         Integer donateAgain = donor.getDonateAgain();
         if (donateAgain == null) {
             bindingResult.addError(new FieldError("donor", "donateAgain",
@@ -163,24 +161,24 @@ public class DonorController {
 
         donor.setRoleId(2); // Set to actual Donor role id
 
-        // 1. Insert new user and get new user id
+        // Insert new user and get new user id
         int userId = donorRepository.addDonor(donor);
 
-        // 2. Prepare and insert DonationBean
+        // Prepare and insert DonationBean
         DonationBean donation = new DonationBean();
         donation.setBloodUnit(1); // set from your logic or form
         donation.setDonationDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         donation.setStatus("Available");
         donation.setUserId(userId);
         donation.setUserRoleId(donor.getRoleId());
-        donation.setHospitalId(1); // use your actual hospital selection
+        donation.setHospitalId(1); // use your actual hospital selection (When superadmin part is done, must change this line)
 
         donorRepository.addDonation(donation);
 
-        // 3. Get blood type name for output
+        // Get blood type name for output
         BloodTypeBean bloodType = bloodTypeRepository.getBloodTypeById(donor.getBloodTypeId());
 
-        // 4. Get all donors to display as a list/table
+        // Get all donors to display as a list/table
         List<UserBean> donorList = donorRepository.getAllDonors();
 
         HospitalBean hospital = hospitalRepository.getAllHospitals().get(0);
@@ -198,17 +196,17 @@ public class DonorController {
         List<UserBean> donorList = donorRepository.getAllDonorsWithStatus();
         model.addAttribute("donorList", donorList);
         model.addAttribute("bloodTypeMap", bloodTypeMap);
-        return "donor-list"; // This should be your new Thymeleaf template
+        return "donor-list";
     }
     
     @GetMapping("/donors/edit/{id}")
     public String showEditDonorForm(@PathVariable("id") int id, Model model) {
-        UserBean donor = donorRepository.getDonorById(id);  // Add this method
+        UserBean donor = donorRepository.getDonorById(id); 
         model.addAttribute("donor", donor);
         model.addAttribute("bloodTypeMap", bloodTypeMap);
         model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
         model.addAttribute("hospitals", hospitalRepository.getAllHospitals());
-        return "edit-donor-admin";  // new Thymeleaf template for editing donor
+        return "edit-donor-admin";  
     }
     
     @PostMapping("/donors/update")

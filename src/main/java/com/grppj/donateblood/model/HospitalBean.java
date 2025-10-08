@@ -11,7 +11,4 @@ public class HospitalBean {
     private String hospitalName;
     private String address;
     private String phone;
-
-    // Getters and setters
-    // ...
 }
