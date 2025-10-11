@@ -1,0 +1,18 @@
+<!-- src/main/resources/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title th:text="${title}">Index</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 3rem auto; }
+  </style>
+</head>
+<body>
+  <h1 th:text="${title}">Index</h1>
+  <p>Time now: <span th:text="${#temporals.format(now, 'yyyy-MM-dd HH:mm')}">--:--</span></p>
+
+  <p>Data from the controller is rendered with <code>th:text</code>.</p>
+</body>
+</html>

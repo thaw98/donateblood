@@ -36,7 +36,7 @@ public class BloodRequestAdminController {
         int hid = (hospitalId != null) ? hospitalId : hospitalRepo.getAllHospitals().get(0).getId();
         model.addAttribute("hospitalId", hid);
         model.addAttribute("pending", requestRepo.listPendingByHospital(hid));
-        return "admin-requests";
+        return "admin/admin-requests";
     }
 
     // Show create-form
@@ -47,7 +47,7 @@ public class BloodRequestAdminController {
         model.addAttribute("hospitalId", hid);
         model.addAttribute("bloodTypes", bloodTypeRepo.getAllBloodTypes());
         model.addAttribute("req", new BloodRequestBean());
-        return "admin-request-add";
+        return "admin/admin-request-add";
     }
 
     // Create request

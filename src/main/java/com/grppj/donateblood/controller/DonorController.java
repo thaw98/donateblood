@@ -76,7 +76,7 @@ public class DonorController {
         model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
         // Block picking date under 18 y/o
         model.addAttribute("maxDob", LocalDate.now().minusYears(18).format(DateTimeFormatter.ISO_DATE));
-        return "add-donor-admin";
+        return "admin/add-donor-admin";
     }
 
     // Handle donor submission + create a PENDING appointment (no donation yet)
@@ -106,7 +106,7 @@ public class DonorController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("hospital", hospitalRepository.getAllHospitals().get(0));
             model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
-            return "add-donor-admin";
+            return "admin/add-donor-admin";
         }
 
         donor.setRoleId(2);                           // donor role
@@ -177,7 +177,7 @@ public class DonorController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("hospital", hospitalRepository.getAllHospitals().get(0));
             model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
-            return "add-donor-admin";
+            return "admin/add-donor-admin";
         }
 
         donor.setRoleId(2);            // donor role
@@ -192,7 +192,7 @@ public class DonorController {
         List<UserBean> donorList = donorRepository.getAllDonorsWithStatus();
         model.addAttribute("donorList", donorList);
         model.addAttribute("bloodTypeMap", bloodTypeMap);
-        return "donor-list";
+        return "admin/donor-list";
     }
 
     @GetMapping("/donors/edit/{id}")
@@ -202,7 +202,7 @@ public class DonorController {
         model.addAttribute("bloodTypeMap", bloodTypeMap);
         model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
         model.addAttribute("hospitals", hospitalRepository.getAllHospitals());
-        return "edit-donor-admin";
+        return "admin/edit-donor-admin";
     }
 
     @PostMapping("/donors/update")

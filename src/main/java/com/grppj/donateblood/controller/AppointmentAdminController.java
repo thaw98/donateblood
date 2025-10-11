@@ -37,7 +37,7 @@ public class AppointmentAdminController {
     @GetMapping("/donors/appointments")
     public String list(Model model) {
         model.addAttribute("appointments", apptRepo.listForHospital(1)); // only hospital_id = 1
-        return "admin-appointments";
+        return "admin/admin-appointments";
     }
 
     // ✅ POST /admin/donors/appointments/{id}/approve
