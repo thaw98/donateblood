@@ -1,6 +1,7 @@
 package com.grppj.donateblood.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -195,8 +196,8 @@ public class DonorRepository {
         return jdbcTemplate.update(sql, donationDate, userId, roleId);
     }
     
- // latest donation for this user (most recent by donation_date)
-    public java.util.Map<String, Object> findLatestDonation(int userId, int roleId) {
+
+    public Map<String, Object> findLatestDonation(int userId, int roleId) {
         String sql = """
             SELECT donation_id, hospital_id, user_id, user_role_id, blood_unit, status
               FROM donation
@@ -207,12 +208,59 @@ public class DonorRepository {
         var list = jdbcTemplate.queryForList(sql, userId, roleId);
         return list.isEmpty() ? null : list.get(0);
     }
-
-    // Only change if it's currently Available
-    public int markDonationUsed(int donationId) {
-      String sql = "UPDATE donation SET status='Used' WHERE donation_id=? AND status='Available'";
-      return jdbcTemplate.update(sql, donationId);
+    
+ // Latest AVAILABLE donation id for this user (if any)
+    public Integer findLatestAvailableDonationId(int userId, int roleId) {
+        String sql = """
+            SELECT donation_id
+              FROM donation
+             WHERE user_id=? AND user_role_id=? AND status='Available'
+             ORDER BY donation_date DESC
+             LIMIT 1
+        """;
+        java.util.List<Integer> ids = jdbcTemplate.query(sql, (rs, rn) -> rs.getInt(1), userId, roleId);
+        return ids.isEmpty() ? null : ids.get(0);
     }
 
+    // Flip one donation from Available -> Used (idempotent)
+    public int markDonationUsed(int donationId) {
+        String sql = "UPDATE donation SET status='Used' WHERE donation_id=? AND status='Available'";
+        return jdbcTemplate.update(sql, donationId);
+    }
+    
+ // Stock derived from donation table for one hospital
+    public java.util.List<StockRow> getStockFromDonationsByHospital(int hospitalId) {
+        String sql = """
+            SELECT bt.id AS blood_type_id,
+                   bt.blood_type,
+                   COALESCE(SUM(CASE WHEN d.status='Available' THEN d.blood_unit ELSE 0 END), 0) AS units,
+                   MAX(d.donation_date) AS last_donation
+              FROM blood_type bt
+              LEFT JOIN user u
+                ON u.blood_type_id = bt.id
+              LEFT JOIN donation d
+                ON d.user_id = u.id
+               AND d.user_role_id = u.role_id
+               AND d.hospital_id = ?
+             GROUP BY bt.id, bt.blood_type
+             ORDER BY bt.id
+        """;
+        return jdbcTemplate.query(sql, (rs, rn) -> {
+            StockRow r = new StockRow();
+            r.bloodTypeId = rs.getInt("blood_type_id");
+            r.bloodType   = rs.getString("blood_type");
+            r.units       = rs.getInt("units");
+            r.lastDonation= rs.getTimestamp("last_donation");
+            return r;
+        }, hospitalId);
+    }
+
+    // simple DTO for the stock view
+    public static class StockRow {
+        public Integer bloodTypeId;
+        public String  bloodType;
+        public Integer units;
+        public java.sql.Timestamp lastDonation;
+    }
 
 }

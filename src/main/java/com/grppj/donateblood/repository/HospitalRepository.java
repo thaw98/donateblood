@@ -23,7 +23,7 @@ public class HospitalRepository {
                 h.setId(rs.getInt("id"));
                 h.setHospitalName(rs.getString("hospital_name"));
                 h.setAddress(rs.getString("address"));
-                h.setPhone(rs.getString("contact")); // map 'contact' to 'phone'
+                h.setPhone(rs.getString("phoneNo")); // map 'contact' to 'phone'
                 return h;
             });
     }
