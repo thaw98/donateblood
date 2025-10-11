@@ -8,12 +8,13 @@ import lombok.Setter;
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
 public class DonorAppointmentBean {
     private Integer id;
-    private String date;
-    private String time;
-    private String createdAt;
-    private String status;
+    private String date;        // yyyy-MM-dd from form
+    private String time;        // HH:mm from form
+    private String createdAt;   // set by DB or app
+    private String status;      // "pending" | "approved" | "rejected"
     private Integer userId;
-    private Integer adminId;
+    private Integer adminId;    // who approved/rejected (nullable)
     private Integer hospitalId;
     private Integer bloodTypeId;
 }
+

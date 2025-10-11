@@ -23,8 +23,7 @@ public class UserBean {
     private Integer roleId;
     private String status;
     private String hospitalName;
-    private Integer donateAgain;
-
+    private String validOfDonation;
     private Integer age;
     
     // Getters and setters

@@ -91,17 +91,16 @@
 	</div>
 	<br>
 	
-	<label>Would you like to donate again?</label><br>
-	<input type="radio" th:field="*{donateAgain}" id="donateYes" value="1" />
-	<label for="donateYes">Yes</label>
-	<input type="radio" th:field="*{donateAgain}" id="donateNo" value="0" />
-	<label for="donateNo">No</label>
-	<div id="err-donateAgain" class="error"
-	     th:classappend="${#fields.hasErrors('donateAgain')} ? '' : 'hidden'"
-	     data-default="Please choose whether you would like to donate or not.">
-	  <span th:if="${#fields.hasErrors('donateAgain')}" th:errors="*{donateAgain}"></span>
-	</div>
-	<br>
+	  <!-- NEW: appointment fields posted with donor -->
+  <label for="appointmentDate">Appointment Date</label>
+  <input type="date" id="appointmentDate" name="appointmentDate" required>
+  <br>
+
+  <label for="appointmentTime">Appointment Time</label>
+  <input type="time" id="appointmentTime" name="appointmentTime" required>
+  <br>
+
+	
 
 
   <input type="submit" value="Add">
@@ -148,7 +147,6 @@
     },
     bloodType:() => $('#bloodType').value !== '',
     address:  () => $('#address').value.trim().length > 0,
-    donate:   () => !!document.querySelector('input[name="donateAgain"]:checked')
   };
 
   let submitted = false;
@@ -173,7 +171,6 @@
     liveHide('#dob',       () => validators.dobReq() && validators.dobOk(), 'err-dateOfBirth');
     liveHide('#bloodType', validators.bloodType, 'err-bloodTypeId');
     liveHide('#address',   validators.address,  'err-address');
-    liveHide('input[name="donateAgain"]', validators.donate, 'err-donateAgain');
 
     $('#donorForm').addEventListener('submit', (e) => {
       submitted = true;
@@ -203,7 +200,6 @@
 
       if (!validators.bloodType()) { ok=false; addErr('#bloodType'); show('err-bloodTypeId'); }
       if (!validators.address())   { ok=false; addErr('#address');   show('err-address'); }
-      if (!validators.donate())    { ok=false; addErr('input[name="donateAgain"]'); show('err-donateAgain'); }
 
       if (!ok) e.preventDefault(); // stay on page until all fields are valid
     });

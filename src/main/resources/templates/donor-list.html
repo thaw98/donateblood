@@ -21,11 +21,6 @@
 	  <option value="available">Available</option>
 	  <option value="used">Used</option>
 	</select>
-	<select id="donateAgainFilter" style="padding:6px;">
-	  <option value="">Donate Again?</option>
-	  <option value="1">Yes</option>
-	  <option value="0">No</option>
-	</select>
 
 
   <button type="button" id="clearFilters" style="padding:6px;">Clear</button>
@@ -42,7 +37,7 @@
     <th>Gender</th>
     <th>Address</th>
     <th>Status</th>
-    <th>Donate Again?</th>
+    <th>Next Eligible</th>
     <th>Action</th>
   </tr>
 
@@ -51,8 +46,7 @@
 	    th:data-email="${d.email}"
 	    th:data-btid="${d.bloodTypeId}"
 	    th:data-bt="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : null}"
-	    th:data-status="${d.status}"
-	    th:data-donate-again="${d.donateAgain}">
+	    th:data-status="${d.status}">
 
 
     <td th:text="${no.count}"></td>
@@ -64,7 +58,7 @@
     <td th:text="${d.gender}"></td>
     <td th:text="${d.address}"></td>
     <td th:text="${d.status}"></td>
-    <td th:text="${d.donateAgain == 1 ? 'Yes' : 'No'}"></td>
+    <td th:text="${d.validOfDonation != null ? d.validOfDonation : '—'}"></td>
     <td><a th:href="@{/admin/donors/edit/{id}(id=${d.id})}">Edit</a></td>
   </tr>
 
@@ -82,10 +76,9 @@
   const qInput   = $('#q');                 // search box
   const btSelect = $('#btFilter');          // blood type dropdown
   const stSelect = $('#statusFilter');      // status dropdown
-  const daSelect = $('#donateAgainFilter'); // donate again dropdown
   const clearBtn = $('#clearFilters');      // clear button
-  const countEl  = $('#matchCount');        // "X matches" label (optional)
-  const noRows   = $('#noRows');            // "No matching donors" row (optional)
+  const countEl  = $('#matchCount');        // "X matches" label
+  const noRows   = $('#noRows');            // "No matching donors" row
 
   // all data rows (skip header and optional noRows)
   const rows = $$('#donorTable tr').filter(tr =>
@@ -94,7 +87,7 @@
 
   const normalize = s => (s || '').toString().trim().toLowerCase();
 
-  function matches(row, q, bt, st, da) {
+  function matches(row, q, bt, st) {
     const name  = normalize(row.dataset.name);
     const email = normalize(row.dataset.email);
     const text  = name + ' ' + email;
@@ -109,11 +102,7 @@
     const rowSt = normalize(row.dataset.status);
     const okSt = !st || rowSt === st;
 
-    // donateAgain: "1" or "0"
-    const rowDa = (row.dataset.donateAgain || '').toString();
-    const okDa = !da || rowDa === da;
-
-    return okSearch && okBt && okSt && okDa;
+    return okSearch && okBt && okSt;
   }
 
   function debounce(fn, ms) {
@@ -122,13 +111,12 @@
 
   function applyFilters() {
     const q  = normalize(qInput?.value);
-    const bt = btSelect?.value || '';              // "" | Blood type
-    const st = normalize(stSelect?.value || '');   // "" | "available" | "used"
-    const da = (daSelect?.value || '').toString(); // "" | "1" | "0"
+    const bt = btSelect?.value || '';
+    const st = normalize(stSelect?.value || '');
     let visible = 0;
 
     rows.forEach(tr => {
-      if (matches(tr, q, bt, st, da)) {
+      if (matches(tr, q, bt, st)) {
         tr.style.display = '';
         visible++;
       } else {
@@ -145,12 +133,10 @@
   if (qInput)   qInput.addEventListener('input', update);
   if (btSelect) btSelect.addEventListener('change', applyFilters);
   if (stSelect) stSelect.addEventListener('change', applyFilters);
-  if (daSelect) daSelect.addEventListener('change', applyFilters);
   if (clearBtn) clearBtn.addEventListener('click', () => {
     if (qInput)   qInput.value = '';
     if (btSelect) btSelect.value = '';
     if (stSelect) stSelect.value = '';
-    if (daSelect) daSelect.value = '';
     applyFilters();
     if (qInput) qInput.focus();
   });
