@@ -30,6 +30,7 @@ import com.grppj.donateblood.repository.BloodTypeRepository;
 import com.grppj.donateblood.repository.DonorAppointmentRepository;
 import com.grppj.donateblood.repository.DonorRepository;
 import com.grppj.donateblood.repository.HospitalRepository;
+import com.grppj.donateblood.repository.HospitalsRepository;
 
 import jakarta.validation.Valid;
 
@@ -41,7 +42,7 @@ public class DonorController {
     private DonorRepository donorRepository;
 
     @Autowired
-    private HospitalRepository hospitalRepository;
+    private HospitalsRepository hospitalRepository;
 
     @Autowired
     private BloodTypeRepository bloodTypeRepository;
@@ -70,6 +71,7 @@ public class DonorController {
     public String showAddDonorForm(Model model) {
         HospitalBean hospital = hospitalRepository.getAllHospitals().get(0); // Use your hospital logic
         UserBean donor = new UserBean();
+        donor.setPassword("default123"); // <-- ADD THIS LINE
         // donor.setDonateAgain(null); // removed: field no longer exists
         model.addAttribute("hospital", hospital);
         model.addAttribute("donor", donor);
@@ -110,6 +112,10 @@ public class DonorController {
         }
 
         donor.setRoleId(2);                           // donor role
+ 	   // ensure a default if empty
+	     if (donor.getPassword() == null || donor.getPassword().isBlank()) {
+	         donor.setPassword("default123");          // <-- ADD THIS
+	     }
         int userId = donorRepository.addDonor(donor); // insert user
 
         // Immediately create a donation so the row shows "Available" and "Next Eligible"
@@ -181,7 +187,6 @@ public class DonorController {
         }
 
         donor.setRoleId(2);            // donor role
-        donorRepository.addDonor(donor);  // INSERT only the user
 
         // No appointment created; go back to donors list
         return "redirect:/admin/donors";
