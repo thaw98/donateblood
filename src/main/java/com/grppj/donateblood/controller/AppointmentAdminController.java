@@ -43,20 +43,18 @@ public class AppointmentAdminController {
     // ✅ POST /admin/donors/appointments/{id}/approve
     @PostMapping("/donors/appointments/{id}/approve")
     public String approve(@PathVariable int id) {
-        Integer adminId = 1; // TODO: replace with logged-in admin
 
-        // get the appointment
-        var appt = apptRepo.findById(id);
-        int userId      = ((Number) appt.get("user_id")).intValue();
-        int userRoleId  = ((Number) appt.get("user_role_id")).intValue();
-        int hospitalId  = ((Number) appt.get("hospital_id")).intValue();
-        int bloodTypeId = ((Number) appt.get("blood_type_id")).intValue();
+        // Get appointment (you already have apptRepo)
+        java.util.Map<String,Object> appt = apptRepo.findById(id);
+        int userId     = ((Number) appt.get("user_id")).intValue();
+        int userRoleId = ((Number) appt.get("user_role_id")).intValue(); // donor role == 2
+        int hospitalId = ((Number) appt.get("hospital_id")).intValue();
 
         // 1) mark appointment approved
-        apptRepo.updateStatus(id, "approved", adminId);
+        apptRepo.updateStatus(id, "approved");
 
-        // 2) create the donation row (status Available)
-        DonationBean d = new com.grppj.donateblood.model.DonationBean();
+        // 2) create one Available donation
+        com.grppj.donateblood.model.DonationBean d = new com.grppj.donateblood.model.DonationBean();
         d.setBloodUnit(1);
         d.setDonationDate(java.time.LocalDateTime.now()
             .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -66,12 +64,10 @@ public class AppointmentAdminController {
         d.setHospitalId(hospitalId);
         donorRepository.addDonation(d);
 
-        // 3) increase stock
-        bloodStockRepository.increaseStock(hospitalId, bloodTypeId, 1, adminId, /*admin role*/1);
-
+        // Back to appointments (or redirect to stock for this hospital)
         return "redirect:/admin/donors/appointments";
+        // return "redirect:/admin/bloodstock?hid=" + hospitalId;
     }
-
 
     // ✅ POST /admin/donors/appointments/{id}/reject
     @PostMapping("/donors/appointments/{id}/reject")

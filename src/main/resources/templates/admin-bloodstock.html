@@ -1,22 +1,20 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><title>Blood Stock – Hospital #1</title></head>
+<head><meta charset="UTF-8"><title>Blood Stock</title></head>
 <body>
-  <h1>Blood Stock – Hospital #1</h1>
-
+  <h1>Blood Stock – Hospital #<span th:text="${hid}">1</span></h1>
   <p><a th:href="@{/admin/donors/appointments}">Back to Appointments</a></p>
 
-  <table border="1" cellpadding="6">
+  <table border="1" cellpadding="6" cellspacing="0">
     <tr>
       <th>Blood Type</th>
       <th>Units</th>
-      <th>Updated</th>
+      <th>Last Donation</th>
     </tr>
     <tr th:each="r : ${rows}">
-      <!-- map blood_type_id -> name from bloodTypes list -->
-	  <td th:text="${r.bloodType}"></td>
-	  <td th:text="${r.amount}"></td>
-	  <td th:text="${r.updatedDate}"></td>
+      <td th:text="${r.bloodType}">A+</td>
+      <td th:text="${r.units}">0</td>
+      <td th:text="${r.lastDonation}">—</td>
     </tr>
   </table>
 </body>
