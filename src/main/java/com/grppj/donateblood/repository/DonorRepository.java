@@ -1,5 +1,6 @@
 package com.grppj.donateblood.repository;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
@@ -35,18 +36,35 @@ public class DonorRepository {
 
 
     // Add a donation
-    public int addDonation(DonationBean donation) {
-	    	String sql = "INSERT INTO donation (blood_unit, donation_date, status, user_id, user_role_id, hospital_id) VALUES (?, ?, ?, ?, ?, ?)";
-	    	return jdbcTemplate.update(sql,
-	    	    donation.getBloodUnit(),
-	    	    donation.getDonationDate(),
-	    	    donation.getStatus(),
-	    	    donation.getUserId(),
-	    	    donation.getUserRoleId(),
-	    	    donation.getHospitalId()
-	    	);
+    public int addDonation(DonationBean d) {
+        // 1) insert donation (your current code)
+        String ins = """
+            INSERT INTO donation (blood_unit, donation_date, status, user_id, user_role_id, hospital_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """;
+        jdbcTemplate.update(
+            ins,
+            d.getBloodUnit(),
+            d.getDonationDate(),   // "yyyy-MM-dd HH:mm:ss"
+            d.getStatus(),
+            d.getUserId(),
+            d.getUserRoleId(),
+            d.getHospitalId()
+        );
 
+        // 2) persist Next Eligible -> user.valid_of_donation
+        String upd = """
+            UPDATE `user`
+               SET valid_of_donation =
+                   DATE_ADD(STR_TO_DATE(?, '%Y-%m-%d %H:%i:%s'), INTERVAL 120 DAY)
+             WHERE id = ?
+               AND role_id IN (2,3)   -- donors (use your role ids)
+        """;
+        jdbcTemplate.update(upd, d.getDonationDate(), d.getUserId());
+
+        return jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Integer.class);
     }
+
     public List<UserBean> getAllDonors() {
         String sql = "SELECT * FROM user WHERE role_id = 2"; // Donor role is 2 (this is from my side, just notes for code combining)
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -65,49 +83,44 @@ public class DonorRepository {
             return user;
         });
     }
-    public List<UserBean> getAllDonorsWithStatus() {
+    public List<UserBean> getAllDonorsWithStatus(int roleId) {
         String sql = """
-        	      SELECT u.id, u.username, u.email, u.password, u.gender, u.dateofbirth, u.address,
-        	             u.phone, u.role_id, u.blood_type_id,
-        	             d.status,
-        	             CASE
-        	               WHEN x.last_date IS NOT NULL THEN DATE_ADD(x.last_date, INTERVAL 4 MONTH)
-        	               ELSE NULL
-        	             END AS next_eligible
-        	        FROM user u
-        	        LEFT JOIN (
-        	          SELECT user_id, user_role_id, MAX(donation_date) AS last_date
-        	          FROM donation
-        	          GROUP BY user_id, user_role_id
-        	        ) x
-        	          ON x.user_id = u.id AND x.user_role_id = u.role_id
-        	        LEFT JOIN donation d
-        	          ON d.user_id = x.user_id
-        	         AND d.user_role_id = x.user_role_id
-        	         AND d.donation_date = x.last_date
-        	       WHERE u.role_id = 2
-        	         AND x.last_date IS NOT NULL      -- ⬅️ exclude users with no donation
-        	       ORDER BY u.id DESC
-        	    """;
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            UserBean user = new UserBean();
-            user.setId(rs.getInt("id"));
-            user.setUsername(rs.getString("username"));
-            user.setEmail(rs.getString("email"));
-            user.setPassword(rs.getString("password"));
-            user.setGender(rs.getString("gender"));
-            user.setDateOfBirth(rs.getString("dateofbirth"));
-            user.setAddress(rs.getString("address"));
-            user.setPhone(rs.getString("phone"));
-            user.setRoleId(rs.getInt("role_id"));
-            user.setStatus(rs.getString("status"));
-            user.setValidOfDonation(rs.getString("next_eligible")); 
-            Object bt = rs.getObject("blood_type_id");
-            user.setBloodTypeId(bt == null ? null : rs.getInt("blood_type_id")); // <-- add
-            user.setValidOfDonation(rs.getString("next_eligible"));
-            return user;
-        });
+            SELECT u.id, u.username, u.email, u.phone, u.gender, u.address, u.dateofbirth,
+                   u.blood_type_id, u.role_id,
+                   u.valid_of_donation,
+                   (
+                       SELECT d.status
+                         FROM donation d
+                        WHERE d.user_id = u.id
+                          AND d.user_role_id = u.role_id
+                        ORDER BY d.donation_date DESC, d.donation_id DESC
+                        LIMIT 1
+                   ) AS last_status
+              FROM `user` u
+             WHERE u.role_id = ?
+             ORDER BY u.id
+        """;
+
+        return jdbcTemplate.query(sql, (rs, rn) -> {
+            UserBean u = new UserBean();
+            u.setId(rs.getInt("id"));
+            u.setUsername(rs.getString("username"));
+            u.setEmail(rs.getString("email"));
+            u.setPhone(rs.getString("phone"));
+            u.setGender(rs.getString("gender"));
+            u.setAddress(rs.getString("address"));
+            u.setDateOfBirth(rs.getString("dateofbirth"));
+            u.setBloodTypeId((Integer) rs.getObject("blood_type_id"));
+            u.setRoleId(rs.getInt("role_id"));
+            u.setStatus(rs.getString("last_status")); // may be null
+
+            Timestamp ts = rs.getTimestamp("valid_of_donation");
+            u.setValidOfDonation(ts == null ? null :
+                ts.toLocalDateTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            return u;
+        }, roleId);
     }
+
     
     public UserBean getDonorById(int id) {
         String sql = """
@@ -254,6 +267,14 @@ public class DonorRepository {
             return r;
         }, hospitalId);
     }
+    
+ // inside DonorRepository
+    public Integer findUserRoleId(int userId) {
+        // `user` is a reserved word in MySQL → keep the backticks
+        String sql = "SELECT role_id FROM `user` WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, Integer.class, userId);
+    }
+
 
     // simple DTO for the stock view
     public static class StockRow {

@@ -1,7 +1,6 @@
 package com.grppj.donateblood.controller;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -18,16 +17,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import com.grppj.donateblood.model.BloodTypeBean;
 import com.grppj.donateblood.model.DonationBean;
-import com.grppj.donateblood.model.DonorAppointmentBean;
-import com.grppj.donateblood.model.HospitalBean;
 import com.grppj.donateblood.model.UserBean;
 import com.grppj.donateblood.repository.BloodStockRepository;
 import com.grppj.donateblood.repository.BloodTypeRepository;
-import com.grppj.donateblood.repository.DonorAppointmentRepository;
 import com.grppj.donateblood.repository.DonorRepository;
 import com.grppj.donateblood.repository.HospitalRepository;
 
@@ -36,6 +30,9 @@ import jakarta.validation.Valid;
 @Controller
 @RequestMapping("/admin")
 public class DonorController {
+
+    /** Your DB uses role_id = 3 for donors. */
+    private static final int DONOR_ROLE = 3;
 
     @Autowired
     private DonorRepository donorRepository;
@@ -46,11 +43,10 @@ public class DonorController {
     @Autowired
     private BloodTypeRepository bloodTypeRepository;
 
-    @Autowired 
+    @Autowired
     private BloodStockRepository bloodStockRepository;
 
-
-    private static Map<Integer, String> bloodTypeMap = new HashMap<>();
+    private static final Map<Integer, String> bloodTypeMap = new HashMap<>();
     static {
         bloodTypeMap.put(1, "A+");
         bloodTypeMap.put(2, "A-");
@@ -68,19 +64,20 @@ public class DonorController {
     // Show add donor form
     @GetMapping("/donors/add")
     public String showAddDonorForm(Model model) {
-        HospitalBean hospital = hospitalRepository.getAllHospitals().get(0); // Use your hospital logic
+        var hospital = hospitalRepository.getAllHospitals().get(0); // choose current hospital
         UserBean donor = new UserBean();
-        donor.setPassword("default123"); // <-- ADD THIS LINE
-        // donor.setDonateAgain(null); // removed: field no longer exists
+        donor.setPassword("default123"); // default for convenience in dev
+
         model.addAttribute("hospital", hospital);
         model.addAttribute("donor", donor);
         model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
-        // Block picking date under 18 y/o
-        model.addAttribute("maxDob", LocalDate.now().minusYears(18).format(DateTimeFormatter.ISO_DATE));
+        // Block picking DOB under 18 y/o
+        model.addAttribute("maxDob",
+                LocalDate.now().minusYears(18).format(DateTimeFormatter.ISO_DATE));
         return "admin/add-donor-admin";
     }
 
-    // Handle donor submission + create a PENDING appointment (no donation yet)
+    // Handle donor submission and create an initial "Available" donation row
     @PostMapping("/donors/add")
     public String addDonor(
             @Valid @ModelAttribute("donor") UserBean donor,
@@ -104,41 +101,6 @@ public class DonorController {
             bindingResult.addError(new FieldError("donor", "email", email, false, null, null, "This email is already registered."));
         }
 
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("hospital", hospitalRepository.getAllHospitals().get(0));
-            model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
-            return "admin/add-donor-admin";
-        }
-
-        donor.setRoleId(2);                           // donor role
- 	   // ensure a default if empty
-	     if (donor.getPassword() == null || donor.getPassword().isBlank()) {
-	         donor.setPassword("default123");          // <-- ADD THIS
-	     }
-	     int userId = 3;                                   // ← use existing donor #3
-
-
-        // Immediately create a donation so the row shows "Available" and "Next Eligible"
-        int hospitalId = hospitalRepository.getAllHospitals().get(0).getId();
-        
-        
-
-        DonationBean donation = new DonationBean();
-        donation.setBloodUnit(1);
-        donation.setDonationDate(
-            java.time.LocalDateTime.now()
-                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        );
-        donation.setStatus("Available");
-        donation.setUserId(userId);
-        donation.setUserRoleId(2);   
-        donation.setHospitalId(hospitalId);
-
-        donorRepository.addDonation(donation);
-
-        // keep trimmed/validated value
-        donor.setEmail(email);
-
         // ----- Phone -----
         String phone = donor.getPhone();
         if (phone == null || phone.trim().isEmpty()) {
@@ -159,8 +121,8 @@ public class DonorController {
             bindingResult.addError(new FieldError("donor", "dateOfBirth", "Date of birth is required."));
         } else {
             try {
-                java.time.LocalDate dob = java.time.LocalDate.parse(dobStr, java.time.format.DateTimeFormatter.ISO_DATE);
-                int age = java.time.Period.between(dob, java.time.LocalDate.now()).getYears();
+                var dob = LocalDate.parse(dobStr, DateTimeFormatter.ISO_DATE);
+                int age = java.time.Period.between(dob, LocalDate.now()).getYears();
                 if (age < 18) {
                     bindingResult.addError(new FieldError("donor", "dateOfBirth", "Donor must be at least 18 years old."));
                 }
@@ -181,26 +143,52 @@ public class DonorController {
             bindingResult.addError(new FieldError("donor", "address", "Address is required."));
         }
 
-        // Re-render form if any errors
+        // If any validation errors, return to form
         if (bindingResult.hasErrors()) {
             model.addAttribute("hospital", hospitalRepository.getAllHospitals().get(0));
             model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
             return "admin/add-donor-admin";
         }
 
-        donor.setRoleId(2);            // donor role
+        // ---------- Persist user ----------
+        donor.setEmail(email);                 // store the trimmed value
+        donor.setRoleId(DONOR_ROLE);           // role_id 3 for donors
+        if (donor.getPassword() == null || donor.getPassword().isBlank()) {
+            donor.setPassword("default123");
+        }
+        int userId = donorRepository.addDonor(donor);
 
-        // No appointment created; go back to donors list
+        // READ BACK actual role to satisfy (user_id, user_role_id) composite FK
+        Integer actualRoleId = donorRepository.findUserRoleId(userId);
+        if (actualRoleId == null) actualRoleId = DONOR_ROLE;
+
+        // ---------- Seed an initial "Available" donation ----------
+        int hospitalId = hospitalRepository.getAllHospitals().get(0).getId();
+
+        DonationBean donation = new DonationBean();
+        donation.setBloodUnit(1);
+        donation.setDonationDate(
+            java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        donation.setStatus("Available");
+        donation.setUserId(userId);
+        donation.setUserRoleId(actualRoleId);   // MUST match user.role_id to pass FK
+        donation.setHospitalId(hospitalId);
+
+        donorRepository.addDonation(donation);
+
         return "redirect:/admin/donors";
     }
 
     @GetMapping("/donors")
     public String showDonorList(Model model) {
-        List<UserBean> donorList = donorRepository.getAllDonorsWithStatus();
+        final int DONOR_ROLE = 3; // your DB’s donor role
+        List<UserBean> donorList = donorRepository.getAllDonorsWithStatus(DONOR_ROLE);
         model.addAttribute("donorList", donorList);
         model.addAttribute("bloodTypeMap", bloodTypeMap);
         return "admin/donor-list";
     }
+
 
     @GetMapping("/donors/edit/{id}")
     public String showEditDonorForm(@PathVariable("id") int id, Model model) {
@@ -214,12 +202,12 @@ public class DonorController {
 
     @PostMapping("/donors/update")
     public String updateDonor(@ModelAttribute("donor") UserBean donor) {
-        // update basic fields (phone)
+        // update basic fields (phone, etc.)
         donorRepository.updateDonor(donor);
 
         // If admin selected "Used", consume the latest Available donation once
         if ("Used".equalsIgnoreCase(String.valueOf(donor.getStatus()))) {
-            var latest = donorRepository.findLatestDonation(donor.getId(), 2); // role_id 2 = donor
+            var latest = donorRepository.findLatestDonation(donor.getId(), DONOR_ROLE); // donor role = 3
             if (latest != null) {
                 int donationId = ((Number) latest.get("donation_id")).intValue();
                 int changed = donorRepository.markDonationUsed(donationId); // only if currently Available
@@ -234,6 +222,4 @@ public class DonorController {
 
         return "redirect:/admin/donors";
     }
-
-
 }

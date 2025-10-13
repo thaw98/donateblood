@@ -11,17 +11,17 @@
 	  <input id="q" type="search" placeholder="Search name or email…" autocomplete="off" style="padding:6px; width:240px;">
 	<select id="btFilter" style="padding:6px;">
 	  <option value="">All blood types</option>
-	  <option th:each="e : ${bloodTypeMap.entrySet()}"
+	  <option th:each="e : ${bloodTypeMap}"
 	          th:value="${e.key}"
 	          th:text="${e.value}">
 	  </option>
 	</select>
-	<select id="statusFilter" style="padding:6px;">
-	  <option value="">All statuses</option>
-	  <option value="available">Available</option>
-	  <option value="used">Used</option>
-	</select>
 
+  <select id="statusFilter" style="padding:6px;">
+    <option value="">All statuses</option>
+    <option value="available">Available</option>
+    <option value="used">Used</option>
+  </select>
 
   <button type="button" id="clearFilters" style="padding:6px;">Clear</button>
   <span id="matchCount" style="margin-left:8px; color:#555;"></span>
