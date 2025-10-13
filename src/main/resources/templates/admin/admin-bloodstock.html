@@ -1,21 +1,253 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><title>Blood Stock</title></head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Blood Stock</title>
+  <!-- Head -->
+  <th:block th:replace="fragments/head :: head(${title})"></th:block>
+  
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  
+  <!-- Custom Donor Admin CSS -->
+  <link rel="stylesheet" th:href="@{/css/donor-admin.css}">
+  
+  <style>
+    /* Blood stock specific styles */
+    .stock-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .units-badge {
+      background: linear-gradient(135deg, var(--success-color) 0%, #157347 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .units-low {
+      background: linear-gradient(135deg, var(--warning-color) 0%, #d63384 100%);
+    }
+    
+    .units-zero {
+      background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+    }
+    
+    .blood-type-cell {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    
+    .last-donation-badge {
+      background: var(--light-color);
+      color: var(--dark-color);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    
+    .hospital-badge {
+      background: linear-gradient(135deg, var(--info-color) 0%, #3a7bc8 100%);
+      color: white;
+      padding: 0.5rem 1.25rem;
+      border-radius: 25px;
+      font-weight: 700;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, var(--info-color) 0%, #3a7bc8 100%);
+      color: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card h3 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-card p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
 <body>
-  <h1>Blood Stock – Hospital #<span th:text="${hid}">1</span></h1>
-  <p><a th:href="@{/admin/donors/appointments}">Back to Appointments</a></p>
+  <!-- Sidebar -->
+  <div th:replace="fragments/sidebar :: sidebar(${active})"></div>
 
-  <table border="1" cellpadding="6" cellspacing="0">
-    <tr>
-      <th>Blood Type</th>
-      <th>Units</th>
-      <th>Last Donation</th>
-    </tr>
-    <tr th:each="r : ${rows}">
-      <td th:text="${r.bloodType}">A+</td>
-      <td th:text="${r.units}">0</td>
-      <td th:text="${r.lastDonation}">—</td>
-    </tr>
-  </table>
+  <!-- Main Content -->
+  <div id="content">
+    <!-- Top nav -->
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+    <!-- Page content -->
+    <main class="container-fluid p-4">
+      
+      <!-- Page Header -->
+      <div class="mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-droplet-fill page-header-icon"></i>
+          <div>
+            <h2 class="mb-0 fw-bold" style="color: var(--primary-color);">Blood Stock Inventory</h2>
+            <p class="text-muted mb-0">
+              <i class="bi bi-arrow-right-short"></i>Current blood bank inventory
+            </p>
+          </div>
+        </div>
+        <span class="hospital-badge">
+          <i class="bi bi-hospital-fill"></i>Hospital #<span th:text="${hid}">1</span>
+        </span>
+      </div>
+
+      <!-- Back Navigation -->
+      <div class="mb-3">
+        <a th:href="@{/admin/donors/appointments}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left-circle me-2"></i>Back to Appointments
+        </a>
+      </div>
+
+      <!-- Summary Statistics -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="stat-card">
+            <i class="bi bi-droplet-fill" style="font-size: 2rem;"></i>
+            <h3 th:text="${#lists.size(rows)}">8</h3>
+            <p>Blood Types Available</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card" style="background: linear-gradient(135deg, var(--success-color) 0%, #157347 100%);">
+            <i class="bi bi-archive-fill" style="font-size: 2rem;"></i>
+            <h3 th:text="${#aggregates.sum(rows.![units])}">0</h3>
+            <p>Total Units in Stock</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card" style="background: linear-gradient(135deg, var(--secondary-color) 0%, #b71c1c 100%);">
+            <i class="bi bi-heart-pulse-fill" style="font-size: 2rem;"></i>
+            <h3 th:text="${#lists.size(rows.?[units > 0])}">0</h3>
+            <p>Types with Stock</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blood Stock Table Card -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <i class="bi bi-clipboard-data"></i>
+          <span>Blood Type Inventory</span>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table donor-table">
+            <thead>
+              <tr>
+                <th><i class="bi bi-droplet-fill"></i>Blood Type</th>
+                <th><i class="bi bi-box-seam"></i>Units Available</th>
+                <th><i class="bi bi-calendar-check"></i>Last Donation Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="r : ${rows}">
+                <td>
+                  <span class="blood-type-badge blood-type-cell" th:text="${r.bloodType}">A+</span>
+                </td>
+                <td>
+                  <span th:classappend="${r.units == 0 ? 'units-badge units-zero' : 
+                                         (r.units < 5 ? 'units-badge units-low' : 
+                                         'units-badge')}">
+                    <i th:classappend="${r.units == 0 ? 'bi bi-exclamation-triangle-fill' : 
+                                        (r.units < 5 ? 'bi bi-exclamation-circle-fill' : 
+                                        'bi bi-check-circle-fill')}"></i>
+                    <span th:text="${r.units}">0</span>
+                    <span>units</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="last-donation-badge" th:if="${r.lastDonation != null && r.lastDonation != '—'}">
+                    <i class="bi bi-calendar3"></i>
+                    <span th:text="${r.lastDonation}"></span>
+                  </span>
+                  <span class="text-muted" th:if="${r.lastDonation == null || r.lastDonation == '—'}">
+                    <i class="bi bi-dash-circle"></i> No donations yet
+                  </span>
+                </td>
+              </tr>
+
+              <!-- Empty State -->
+              <tr th:if="${#lists.isEmpty(rows)}">
+                <td colspan="3" class="no-results">
+                  <i class="bi bi-inbox"></i>
+                  <div>No blood stock data available</div>
+                  <small class="text-muted">Blood inventory will be displayed here</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Legend/Info Card -->
+      <div class="stock-card mt-4">
+        <h5 class="mb-3" style="color: var(--primary-color);">
+          <i class="bi bi-info-circle-fill text-info me-2"></i>Stock Level Indicators
+        </h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="units-badge" style="font-size: 0.85rem; padding: 0.3rem 0.6rem;">
+                <i class="bi bi-check-circle-fill"></i>5+
+              </span>
+              <span>Healthy Stock</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="units-badge units-low" style="font-size: 0.85rem; padding: 0.3rem 0.6rem;">
+                <i class="bi bi-exclamation-circle-fill"></i>1-4
+              </span>
+              <span>Low Stock Warning</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="units-badge units-zero" style="font-size: 0.85rem; padding: 0.3rem 0.6rem;">
+                <i class="bi bi-exclamation-triangle-fill"></i>0
+              </span>
+              <span>Out of Stock</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- JS loaded directly -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script th:src="@{/js/dashboard.js}"></script>
+
 </body>
 </html>

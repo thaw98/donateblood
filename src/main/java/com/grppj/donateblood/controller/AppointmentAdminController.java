@@ -26,6 +26,7 @@ public class AppointmentAdminController {
     @GetMapping("/donors/appointments")
     public String list(Model model) {
         model.addAttribute("appointments", apptRepo.listForHospital(1)); // hospital_id = 1
+        model.addAttribute("active", "appointments");
         return "admin/admin-appointments";
     }
 

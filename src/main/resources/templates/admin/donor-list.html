@@ -1,146 +1,268 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<title>All Donors</title>
+  <meta charset="UTF-8">
+  <title>All Donors</title>
+  <!-- Head -->
+  <th:block th:replace="fragments/head :: head(${title})"></th:block>
+  
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  
+	<link rel="stylesheet" th:href="@{/css/donor-admin.css}">
 </head>
 <body>
-	<h2>All Donors</h2>
-	<!-- Filter/Search toolbar -->
-	<div style="margin:10px 0; display:flex; gap:8px; align-items:center;">
-	  <input id="q" type="search" placeholder="Search name or email…" autocomplete="off" style="padding:6px; width:240px;">
-	<select id="btFilter" style="padding:6px;">
-	  <option value="">All blood types</option>
-	  <option th:each="e : ${bloodTypeMap}"
-	          th:value="${e.key}"
-	          th:text="${e.value}">
-	  </option>
-	</select>
+  <!-- Sidebar -->
+  <div th:replace="fragments/sidebar :: sidebar(${active})"></div>
 
-  <select id="statusFilter" style="padding:6px;">
-    <option value="">All statuses</option>
-    <option value="available">Available</option>
-    <option value="used">Used</option>
-  </select>
+  <!-- Main Content -->
+  <div id="content">
+    <!-- Top nav -->
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
 
-  <button type="button" id="clearFilters" style="padding:6px;">Clear</button>
-  <span id="matchCount" style="margin-left:8px; color:#555;"></span>
-</div>
-<table id="donorTable" border="1">
-  <tr>
-    <th>No.</th>
-    <th>Username</th>
-    <th>Blood Type</th>
-    <th>Date of Birth</th>
-    <th>Email</th>
-    <th>Phone</th>
-    <th>Gender</th>
-    <th>Address</th>
-    <th>Status</th>
-    <th>Action</th>
-  </tr>
+    <!-- Page content -->
+    <main class="container-fluid p-4">
+      
+      <!-- Page Header -->
+      <div class="mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-people-fill page-header-icon"></i>
+          <div>
+            <h2 class="mb-0 fw-bold" style="color: var(--primary-color);">All Donors</h2>
+            <p class="text-muted mb-0">
+              <i class="bi bi-arrow-right-short"></i>Manage and filter donor records
+            </p>
+          </div>
+        </div>
+      </div>
 
-  <tr th:each="d, no : ${donorList}"
-      th:data-name="${d.username}"
-      th:data-email="${d.email}"
-      th:data-btid="${d.bloodTypeId}"
-      th:data-bt="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : null}"
-      th:data-status="${d.status}">
-    <td th:text="${no.count}"></td>
-    <td th:text="${d.username}"></td>
-    <td th:text="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : 'Unknown'}"></td>
-    <td th:text="${d.dateOfBirth}"></td>
-    <td th:text="${d.email}"></td>
-    <td th:text="${d.phone}"></td>
-    <td th:text="${d.gender}"></td>
-    <td th:text="${d.address}"></td>
-    <td th:text="${d.status}"></td>
-    <td><a th:href="@{/admin/donors/edit/{id}(id=${d.id})}">Edit</a></td>
-  </tr>
+      <!-- Filter Toolbar -->
+      <div class="filter-toolbar">
+        <div class="row align-items-end g-3">
+          <!-- Search Input -->
+          <div class="col-lg-4 col-md-6">
+            <label class="form-label fw-bold mb-2" style="color: var(--dark-color);">
+              <i class="bi bi-search text-info"></i> Search Donor
+            </label>
+            <div class="search-input-wrapper">
+              <i class="bi bi-search"></i>
+              <input id="q" 
+                     type="search" 
+                     class="form-control" 
+                     placeholder="Search name or email…" 
+                     autocomplete="off">
+            </div>
+          </div>
 
-  <tr id="noRows" style="display:none;">
-    <td colspan="10" style="text-align:center; color:#666;">No matching donors</td>
-  </tr>
-</table>
+          <!-- Blood Type Filter -->
+          <div class="col-lg-2 col-md-6">
+            <label class="form-label fw-bold mb-2" style="color: var(--dark-color);">
+              <i class="bi bi-droplet-fill text-danger"></i> Blood Type
+            </label>
+            <select id="btFilter" class="form-select">
+              <option value="">All Types</option>
+              <option th:each="e : ${bloodTypeMap}"
+                      th:value="${e.key}"
+                      th:text="${e.value}">
+              </option>
+            </select>
+          </div>
 
-</body>
-<script>
-(function () {
-  const $  = (s, c=document) => c.querySelector(s);
-  const $$ = (s, c=document) => Array.from(c.querySelectorAll(s));
+          <!-- Status Filter -->
+          <div class="col-lg-2 col-md-6">
+            <label class="form-label fw-bold mb-2" style="color: var(--dark-color);">
+              <i class="bi bi-activity text-info"></i> Status
+            </label>
+            <select id="statusFilter" class="form-select">
+              <option value="">All Statuses</option>
+              <option value="available">Available</option>
+              <option value="used">Used</option>
+            </select>
+          </div>
 
-  const qInput   = $('#q');                 // search box
-  const btSelect = $('#btFilter');          // blood type dropdown
-  const stSelect = $('#statusFilter');      // status dropdown
-  const clearBtn = $('#clearFilters');      // clear button
-  const countEl  = $('#matchCount');        // "X matches" label
-  const noRows   = $('#noRows');            // "No matching donors" row
+          <!-- Clear Button -->
+          <div class="col-lg-2 col-md-6">
+            <button type="button" id="clearFilters" class="btn btn-clear w-100">
+              <i class="bi bi-x-circle me-1"></i> Clear Filters
+            </button>
+          </div>
 
-  // all data rows (skip header and optional noRows)
-  const rows = $$('#donorTable tr').filter(tr =>
-    tr.rowIndex !== 0 && tr.id !== 'noRows'
-  );
+          <!-- Match Count -->
+          <div class="col-lg-2 col-md-6 text-end">
+            <span id="matchCount" class="match-count"></span>
+          </div>
+        </div>
+      </div>
 
-  const normalize = s => (s || '').toString().trim().toLowerCase();
+      <!-- Table Card -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <i class="bi bi-table"></i>
+          <span>Donor Records</span>
+        </div>
+        
+        <div class="table-responsive">
+          <table id="donorTable" class="table donor-table">
+            <thead>
+              <tr>
+                <th><i class="bi bi-hash"></i>No.</th>
+                <th><i class="bi bi-person-badge"></i>Username</th>
+                <th><i class="bi bi-droplet-fill"></i>Blood Type</th>
+                <th><i class="bi bi-calendar-event"></i>Date of Birth</th>
+                <th><i class="bi bi-envelope"></i>Email</th>
+                <th><i class="bi bi-telephone"></i>Phone</th>
+                <th><i class="bi bi-gender-ambiguous"></i>Gender</th>
+                <th><i class="bi bi-geo-alt"></i>Address</th>
+                <th><i class="bi bi-activity"></i>Status</th>
+                <th><i class="bi bi-pencil-square"></i>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="d, no : ${donorList}"
+                  th:data-name="${d.username}"
+                  th:data-email="${d.email}"
+                  th:data-btid="${d.bloodTypeId}"
+                  th:data-bt="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : null}"
+                  th:data-status="${d.status}">
+                
+                <td>
+                  <span class="row-number" th:text="${no.count}"></span>
+                </td>
+                <td>
+                  <strong th:text="${d.username}"></strong>
+                </td>
+                <td>
+                  <span class="blood-type-badge" 
+                        th:text="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : 'Unknown'}"></span>
+                </td>
+                <td th:text="${d.dateOfBirth}"></td>
+                <td>
+                  <i class="bi bi-envelope-fill text-muted me-1"></i>
+                  <span th:text="${d.email}"></span>
+                </td>
+                <td>
+                  <i class="bi bi-phone-vibrate text-muted me-1"></i>
+                  <span th:text="${d.phone}"></span>
+                </td>
+                <td>
+                  <i th:classappend="${d.gender == 'Male' ? 'bi bi-gender-male text-info' : 'bi bi-gender-female text-danger'}" 
+                     class="me-1"></i>
+                  <span th:text="${d.gender}"></span>
+                </td>
+                <td th:text="${d.address}"></td>
+                <td>
+                  <span th:classappend="${d.status == 'Available' ? 'status-badge status-available' : 'status-badge status-used'}">
+                    <i th:classappend="${d.status == 'Available' ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'}"></i>
+                    <span th:text="${d.status}"></span>
+                  </span>
+                </td>
+                <td>
+                  <a th:href="@{/admin/donors/edit/{id}(id=${d.id})}" class="btn-action">
+                    <i class="bi bi-pencil-fill"></i>Edit
+                  </a>
+                </td>
+              </tr>
 
-  function matches(row, q, bt, st) {
-    const name  = normalize(row.dataset.name);
-    const email = normalize(row.dataset.email);
-    const text  = name + ' ' + email;
+              <tr id="noRows" style="display:none;">
+                <td colspan="10" class="no-results">
+                  <i class="bi bi-inbox"></i>
+                  <div>No matching donors found</div>
+                  <small class="text-muted">Try adjusting your search filters</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-    const okSearch = !q || text.includes(q);
+    </main>
+  </div>
 
-    // blood type by id only
-    const rowBtId = (row.dataset.btid || '').toString();
-    const okBt = !bt || rowBtId === bt;
+  <!-- JS loaded directly -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script th:src="@{/js/dashboard.js}"></script>
 
-    // status: normalize to lowercase
-    const rowSt = normalize(row.dataset.status);
-    const okSt = !st || rowSt === st;
+  <script>
+  (function () {
+    const $  = (s, c=document) => c.querySelector(s);
+    const $$ = (s, c=document) => Array.from(c.querySelectorAll(s));
 
-    return okSearch && okBt && okSt;
-  }
+    const qInput   = $('#q');                 // search box
+    const btSelect = $('#btFilter');          // blood type dropdown
+    const stSelect = $('#statusFilter');      // status dropdown
+    const clearBtn = $('#clearFilters');      // clear button
+    const countEl  = $('#matchCount');        // "X matches" label
+    const noRows   = $('#noRows');            // "No matching donors" row
 
-  function debounce(fn, ms) {
-    let t; return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
-  }
+    // all data rows (skip header and optional noRows)
+    const rows = $$('#donorTable tr').filter(tr =>
+      tr.rowIndex !== 0 && tr.id !== 'noRows'
+    );
 
-  function applyFilters() {
-    const q  = normalize(qInput?.value);
-    const bt = btSelect?.value || '';
-    const st = normalize(stSelect?.value || '');
-    let visible = 0;
+    const normalize = s => (s || '').toString().trim().toLowerCase();
 
-    rows.forEach(tr => {
-      if (matches(tr, q, bt, st)) {
-        tr.style.display = '';
-        visible++;
-      } else {
-        tr.style.display = 'none';
+    function matches(row, q, bt, st) {
+      const name  = normalize(row.dataset.name);
+      const email = normalize(row.dataset.email);
+      const text  = name + ' ' + email;
+
+      const okSearch = !q || text.includes(q);
+
+      // blood type by id only
+      const rowBtId = (row.dataset.btid || '').toString();
+      const okBt = !bt || rowBtId === bt;
+
+      // status: normalize to lowercase
+      const rowSt = normalize(row.dataset.status);
+      const okSt = !st || rowSt === st;
+
+      return okSearch && okBt && okSt;
+    }
+
+    function debounce(fn, ms) {
+      let t; return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
+    }
+
+    function applyFilters() {
+      const q  = normalize(qInput?.value);
+      const bt = btSelect?.value || '';
+      const st = normalize(stSelect?.value || '');
+      let visible = 0;
+
+      rows.forEach(tr => {
+        if (matches(tr, q, bt, st)) {
+          tr.style.display = '';
+          visible++;
+        } else {
+          tr.style.display = 'none';
+        }
+      });
+
+      if (countEl) {
+        countEl.textContent = visible ? `${visible} match${visible > 1 ? 'es' : ''}` : '';
+        countEl.style.display = visible ? 'inline-block' : 'none';
       }
+      if (noRows) noRows.style.display = visible ? 'none' : '';
+    }
+
+    const update = debounce(applyFilters, 120);
+
+    if (qInput)   qInput.addEventListener('input', update);
+    if (btSelect) btSelect.addEventListener('change', applyFilters);
+    if (stSelect) stSelect.addEventListener('change', applyFilters);
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      if (qInput)   qInput.value = '';
+      if (btSelect) btSelect.value = '';
+      if (stSelect) stSelect.value = '';
+      applyFilters();
+      if (qInput) qInput.focus();
     });
 
-    if (countEl) countEl.textContent = visible ? `${visible} match${visible > 1 ? 'es' : ''}` : '';
-    if (noRows) noRows.style.display = visible ? 'none' : '';
-  }
-
-  const update = debounce(applyFilters, 120);
-
-  if (qInput)   qInput.addEventListener('input', update);
-  if (btSelect) btSelect.addEventListener('change', applyFilters);
-  if (stSelect) stSelect.addEventListener('change', applyFilters);
-  if (clearBtn) clearBtn.addEventListener('click', () => {
-    if (qInput)   qInput.value = '';
-    if (btSelect) btSelect.value = '';
-    if (stSelect) stSelect.value = '';
+    // initial run
     applyFilters();
-    if (qInput) qInput.focus();
-  });
+  })();
+  </script>
 
-  // initial run
-  applyFilters();
-})();
-</script>
-
-
+</body>
 </html>

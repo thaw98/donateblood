@@ -1,5 +1,7 @@
+// src/main/java/com/grppj/donateblood/controller/AdminController.java
 package com.grppj.donateblood.controller;
 
+import com.grppj.donateblood.repository.DashboardRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,18 +11,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/admin")
 public class AdminController {
 
-    // /admin  or /admin/
-    @GetMapping({ "", "/" })
+    private final DashboardRepository dashboardRepo;
+
+    public AdminController(DashboardRepository dashboardRepo) {
+        this.dashboardRepo = dashboardRepo;
+    }
+
+    // serve /admin, /admin/ and /admin/dashboard
+    @GetMapping({ "", "/", "/dashboard" })
     public String dashboard(Model model) {
-        model.addAttribute("title", "Dashboard");
-        model.addAttribute("active", "dashboard");
-
-        // demo data for the top bar
+        // sidebar + page chrome
+        model.addAttribute("active", "admin");
         model.addAttribute("userName", "Admin");
-        model.addAttribute("notifications", java.util.List.of());
-        model.addAttribute("avatarUrl", null); // or a real URL
+        model.addAttribute("avatarUrl", null); // or a URL
 
-        // Thymeleaf will resolve to src/main/resources/templates/admin/admin-dashboard.html
+        // counters (JdbcTemplate via DashboardRepository)
+        model.addAttribute("totalBloodDonated", dashboardRepo.totalBloodDonatedUnits());
+        model.addAttribute("completedDonors",   dashboardRepo.completedDonors());
+        model.addAttribute("pendingDonors",     dashboardRepo.pendingDonors());
+        model.addAttribute("totalAppointments", dashboardRepo.totalAppointments());
+
+        // resolves to templates/admin/dashboard.html
         return "admin/dashboard";
     }
 }

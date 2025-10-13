@@ -63,10 +63,9 @@ public class DonorController {
     public String showAddDonorForm(Model model) {
         var hospital = hospitalRepository.getAllHospitals().get(0); // pick current hospital
         UserBean donor = new UserBean();
-        donor.setPassword("default123"); // dev convenience
-
         model.addAttribute("hospital", hospital);
         model.addAttribute("donor", donor);
+        model.addAttribute("active", "add-donor");
         model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
         model.addAttribute("maxDob",
             LocalDate.now().minusYears(18).format(DateTimeFormatter.ISO_DATE));
@@ -171,6 +170,7 @@ public class DonorController {
     public String showDonorList(Model model) {
         List<UserBean> donorList = donorRepository.getAllDonorsWithStatus(DONOR_ROLE);
         model.addAttribute("donorList", donorList);
+        model.addAttribute("active", "donors");
         model.addAttribute("bloodTypeMap", bloodTypeMap);
         return "admin/donor-list";
     }

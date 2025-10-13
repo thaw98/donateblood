@@ -17,6 +17,7 @@ public class BloodStockController {
     public String stock(@RequestParam(name="hid", defaultValue="1") Integer hospitalId, Model model) {
         model.addAttribute("hid", hospitalId);
         model.addAttribute("rows", donorRepository.getStockFromDonationsByHospital(hospitalId));
+        model.addAttribute("active", "blood-stock");
         return "admin/admin-bloodstock";
     }
 }
