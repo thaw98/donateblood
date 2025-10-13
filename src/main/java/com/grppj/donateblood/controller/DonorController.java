@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,8 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.grppj.donateblood.model.DonationBean;
 import com.grppj.donateblood.model.UserBean;
-import com.grppj.donateblood.repository.BloodStockRepository;
 import com.grppj.donateblood.repository.BloodTypeRepository;
+import com.grppj.donateblood.repository.DonorAppointmentRepository;
 import com.grppj.donateblood.repository.DonorRepository;
 import com.grppj.donateblood.repository.HospitalRepository;
 
@@ -31,20 +32,16 @@ import jakarta.validation.Valid;
 @RequestMapping("/admin")
 public class DonorController {
 
-    /** Your DB uses role_id = 3 for donors. */
+    /** donors have role_id = 3 */
     private static final int DONOR_ROLE = 3;
 
-    @Autowired
-    private DonorRepository donorRepository;
+    @Autowired private DonorRepository donorRepository;
+    @Autowired private HospitalRepository hospitalRepository;
+    @Autowired private BloodTypeRepository bloodTypeRepository;
+    @Autowired private DonorAppointmentRepository apptRepo;
 
-    @Autowired
-    private HospitalRepository hospitalRepository;
-
-    @Autowired
-    private BloodTypeRepository bloodTypeRepository;
-
-    @Autowired
-    private BloodStockRepository bloodStockRepository;
+    /** Use direct JDBC here to update phone only (avoid mass donation status update). */
+    @Autowired private JdbcTemplate jdbcTemplate;
 
     private static final Map<Integer, String> bloodTypeMap = new HashMap<>();
     static {
@@ -61,38 +58,34 @@ public class DonorController {
     private static final Pattern EMAIL_RE =
         Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
-    // Show add donor form
+    // ===== Add Donor (GET) =====
     @GetMapping("/donors/add")
     public String showAddDonorForm(Model model) {
-        var hospital = hospitalRepository.getAllHospitals().get(0); // choose current hospital
+        var hospital = hospitalRepository.getAllHospitals().get(0); // pick current hospital
         UserBean donor = new UserBean();
-        donor.setPassword("default123"); // default for convenience in dev
+        donor.setPassword("default123"); // dev convenience
 
         model.addAttribute("hospital", hospital);
         model.addAttribute("donor", donor);
         model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
-        // Block picking DOB under 18 y/o
         model.addAttribute("maxDob",
-                LocalDate.now().minusYears(18).format(DateTimeFormatter.ISO_DATE));
+            LocalDate.now().minusYears(18).format(DateTimeFormatter.ISO_DATE));
         return "admin/add-donor-admin";
     }
 
-    // Handle donor submission and create an initial "Available" donation row
+    // ===== Add Donor (POST) =====
     @PostMapping("/donors/add")
-    public String addDonor(
-            @Valid @ModelAttribute("donor") UserBean donor,
-            BindingResult bindingResult,
-            Model model) {
+    public String addDonor(@Valid @ModelAttribute("donor") UserBean donor,
+                           BindingResult bindingResult,
+                           Model model) {
 
-        // ----- Username -----
-        String username = donor.getUsername();
-        if (username == null || username.trim().isEmpty()) {
+        // ---- username
+        if (donor.getUsername() == null || donor.getUsername().trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "username", "Username is required."));
         }
 
-        // ----- Email -----
-        String rawEmail = donor.getEmail();
-        String email = (rawEmail == null) ? "" : rawEmail.trim();
+        // ---- email (required, format, unique)
+        String email = donor.getEmail() == null ? "" : donor.getEmail().trim();
         if (email.isEmpty()) {
             bindingResult.addError(new FieldError("donor", "email", email, false, null, null, "Email is required."));
         } else if (!EMAIL_RE.matcher(email).matches()) {
@@ -101,7 +94,7 @@ public class DonorController {
             bindingResult.addError(new FieldError("donor", "email", email, false, null, null, "This email is already registered."));
         }
 
-        // ----- Phone -----
+        // ---- phone
         String phone = donor.getPhone();
         if (phone == null || phone.trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "phone", "Phone is required."));
@@ -109,13 +102,12 @@ public class DonorController {
             bindingResult.addError(new FieldError("donor", "phone", "Phone must be 9–15 digits."));
         }
 
-        // ----- Gender -----
-        String gender = donor.getGender();
-        if (gender == null || gender.trim().isEmpty()) {
+        // ---- gender
+        if (donor.getGender() == null || donor.getGender().trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "gender", "Gender is required."));
         }
 
-        // ----- Date of Birth (18+) -----
+        // ---- DOB 18+
         String dobStr = donor.getDateOfBirth();
         if (dobStr == null || dobStr.trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "dateOfBirth", "Date of birth is required."));
@@ -131,65 +123,59 @@ public class DonorController {
             }
         }
 
-        // ----- Blood Type -----
-        Integer bloodTypeId = donor.getBloodTypeId();
-        if (bloodTypeId == null) {
+        // ---- blood type
+        if (donor.getBloodTypeId() == null) {
             bindingResult.addError(new FieldError("donor", "bloodTypeId", "Blood type is required."));
         }
 
-        // ----- Address -----
-        String address = donor.getAddress();
-        if (address == null || address.trim().isEmpty()) {
+        // ---- address
+        if (donor.getAddress() == null || donor.getAddress().trim().isEmpty()) {
             bindingResult.addError(new FieldError("donor", "address", "Address is required."));
         }
 
-        // If any validation errors, return to form
         if (bindingResult.hasErrors()) {
             model.addAttribute("hospital", hospitalRepository.getAllHospitals().get(0));
             model.addAttribute("bloodTypes", bloodTypeRepository.getAllBloodTypes());
             return "admin/add-donor-admin";
         }
 
-        // ---------- Persist user ----------
-        donor.setEmail(email);                 // store the trimmed value
-        donor.setRoleId(DONOR_ROLE);           // role_id 3 for donors
-        if (donor.getPassword() == null || donor.getPassword().isBlank()) {
-            donor.setPassword("default123");
-        }
+        // 1) Create donor user
+        donor.setRoleId(DONOR_ROLE);
         int userId = donorRepository.addDonor(donor);
 
-        // READ BACK actual role to satisfy (user_id, user_role_id) composite FK
-        Integer actualRoleId = donorRepository.findUserRoleId(userId);
-        if (actualRoleId == null) actualRoleId = DONOR_ROLE;
+        // 2) Resolve role/hospital
+        int actualRoleId = donorRepository.findUserRoleId(userId);
+        int hospitalId   = hospitalRepository.getAllHospitals().get(0).getId();
 
-        // ---------- Seed an initial "Available" donation ----------
-        int hospitalId = hospitalRepository.getAllHospitals().get(0).getId();
+        // 3) Create an APPROVED appointment now (admin-created)
+        int apptId = apptRepo.createCompletedAppointmentNow(
+                userId, actualRoleId, hospitalId, donor.getBloodTypeId()
+        );
 
+        // 4) Create initial Available donation tied to that appointment (→ stock +1)
         DonationBean donation = new DonationBean();
         donation.setBloodUnit(1);
         donation.setDonationDate(
             java.time.LocalDateTime.now()
-                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        );
         donation.setStatus("Available");
-        donation.setUserId(userId);
-        donation.setUserRoleId(actualRoleId);   // MUST match user.role_id to pass FK
-        donation.setHospitalId(hospitalId);
-
+        donation.setDonorAppointmentId(apptId);
         donorRepository.addDonation(donation);
 
         return "redirect:/admin/donors";
     }
 
+    // ===== List donors (those with approved/completed appointments; repo handles it) =====
     @GetMapping("/donors")
     public String showDonorList(Model model) {
-        final int DONOR_ROLE = 3; // your DB’s donor role
         List<UserBean> donorList = donorRepository.getAllDonorsWithStatus(DONOR_ROLE);
         model.addAttribute("donorList", donorList);
         model.addAttribute("bloodTypeMap", bloodTypeMap);
         return "admin/donor-list";
     }
 
-
+    // ===== Edit donor (GET) =====
     @GetMapping("/donors/edit/{id}")
     public String showEditDonorForm(@PathVariable("id") int id, Model model) {
         UserBean donor = donorRepository.getDonorById(id);
@@ -200,22 +186,19 @@ public class DonorController {
         return "admin/edit-donor-admin";
     }
 
+    // ===== Edit donor (POST) =====
     @PostMapping("/donors/update")
     public String updateDonor(@ModelAttribute("donor") UserBean donor) {
-        // update basic fields (phone, etc.)
-        donorRepository.updateDonor(donor);
+        // Update phone ONLY (avoid repository's mass status update)
+        jdbcTemplate.update("UPDATE `user` SET phone = ? WHERE id = ?", donor.getPhone(), donor.getId());
 
-        // If admin selected "Used", consume the latest Available donation once
+        // If admin selected "Used", consume exactly one latest Available donation
         if ("Used".equalsIgnoreCase(String.valueOf(donor.getStatus()))) {
-            var latest = donorRepository.findLatestDonation(donor.getId(), DONOR_ROLE); // donor role = 3
+            var latest = donorRepository.findLatestDonation(donor.getId(), DONOR_ROLE);
             if (latest != null) {
-                int donationId = ((Number) latest.get("donation_id")).intValue();
-                int changed = donorRepository.markDonationUsed(donationId); // only if currently Available
-                if (changed > 0) {
-                    int hospitalId  = ((Number) latest.get("hospital_id")).intValue();
-                    int units       = ((Number) latest.get("blood_unit")).intValue();
-                    Integer btId    = donorRepository.getDonorById(donor.getId()).getBloodTypeId();
-                    bloodStockRepository.decreaseStock(hospitalId, btId, units, 1, 1); // adminId/adminRoleId
+                Integer donationId = (Integer) latest.get("donation_id");
+                if (donationId != null) {
+                    donorRepository.markDonationUsed(donationId); // flips Available → Used (once)
                 }
             }
         }

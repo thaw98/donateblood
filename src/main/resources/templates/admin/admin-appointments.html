@@ -9,6 +9,7 @@
     <th>#</th><th>Donor</th><th>Email</th><th>Phone</th>
     <th>Date</th><th>Time</th><th>Created</th><th>Status</th><th>Action</th>
   </tr>
+
   <tr th:each="a, i : ${appointments}">
     <td th:text="${i.count}"></td>
     <td th:text="${a.username}"></td>
@@ -19,14 +20,15 @@
     <td th:text="${a.created_at}"></td>
     <td th:text="${a.status}"></td>
     <td>
-<form th:action="@{/admin/donors/appointments/{id}/approve(id=${a.id})}" method="post" style="display:inline">
-  <button type="submit" th:disabled="${a.status != 'pending'}">Approve</button>
-</form>
+      <form th:action="@{/admin/donors/appointments/{id}/approve(id=${a.id})}"
+            method="post" style="display:inline">
+        <button type="submit" th:disabled="${a.status != 'pending'}">Approve</button>
+      </form>
 
-<form th:action="@{/admin/donors/appointments/{id}/reject(id=${a.id})}" method="post" style="display:inline">
-  <button type="submit" th:disabled="${a.status != 'pending'}">Reject</button>
-</form>
-
+      <form th:action="@{/admin/donors/appointments/{id}/reject(id=${a.id})}"
+            method="post" style="display:inline">
+        <button type="submit" th:disabled="${a.status != 'pending'}">Reject</button>
+      </form>
     </td>
   </tr>
 </table>

@@ -37,36 +37,32 @@
     <th>Gender</th>
     <th>Address</th>
     <th>Status</th>
-    <th>Next Eligible</th>
     <th>Action</th>
   </tr>
 
-	<tr th:each="d, no : ${donorList}"
-	    th:data-name="${d.username}"
-	    th:data-email="${d.email}"
-	    th:data-btid="${d.bloodTypeId}"
-	    th:data-bt="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : null}"
-	    th:data-status="${d.status}">
-
-
+  <tr th:each="d, no : ${donorList}"
+      th:data-name="${d.username}"
+      th:data-email="${d.email}"
+      th:data-btid="${d.bloodTypeId}"
+      th:data-bt="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : null}"
+      th:data-status="${d.status}">
     <td th:text="${no.count}"></td>
     <td th:text="${d.username}"></td>
     <td th:text="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : 'Unknown'}"></td>
-	<td th:text="${d.dateOfBirth}"></td>
+    <td th:text="${d.dateOfBirth}"></td>
     <td th:text="${d.email}"></td>
     <td th:text="${d.phone}"></td>
     <td th:text="${d.gender}"></td>
     <td th:text="${d.address}"></td>
     <td th:text="${d.status}"></td>
-    <td th:text="${d.validOfDonation != null ? d.validOfDonation : '—'}"></td>
     <td><a th:href="@{/admin/donors/edit/{id}(id=${d.id})}">Edit</a></td>
   </tr>
 
-  <!-- optional 'no results' row -->
   <tr id="noRows" style="display:none;">
-    <td colspan="11" style="text-align:center; color:#666;">No matching donors</td>
+    <td colspan="10" style="text-align:center; color:#666;">No matching donors</td>
   </tr>
 </table>
+
 </body>
 <script>
 (function () {
