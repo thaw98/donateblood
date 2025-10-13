@@ -1,0 +1,36 @@
+<!-- templates/fragments/sidebar.html -->
+<nav id="sidebar" th:fragment="sidebar(active)">
+  <div class="sidebar-header">
+    <h3 class="m-0"><i class="fas fa-chart-line me-2"></i>Admin Panel</h3>
+  </div>
+
+  <ul class="list-unstyled components">
+    <li th:classappend="${active}=='dashboard' ? ' active'">
+      <a th:href="@{/admin/dashboard}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+    </li>
+    <li th:classappend="${active}=='users' ? ' active'">
+      <a th:href="@{/admin/users}"><i class="fas fa-users me-2"></i>Users</a>
+    </li>
+    <li th:classappend="${active}=='products' ? ' active'">
+      <a th:href="@{/admin/products}"><i class="fas fa-box me-2"></i>Products</a>
+    </li>
+    <li th:classappend="${active}=='orders' ? ' active'">
+      <a th:href="@{/admin/orders}"><i class="fas fa-shopping-cart me-2"></i>Orders</a>
+    </li>
+    <li th:classappend="${active}=='analytics' ? ' active'">
+      <a th:href="@{/admin/analytics}"><i class="fas fa-chart-bar me-2"></i>Analytics</a>
+    </li>
+    <li th:classappend="${active}=='settings' ? ' active'">
+      <a th:href="@{/admin/settings}"><i class="fas fa-cog me-2"></i>Settings</a>
+    </li>
+  </ul>
+
+  <div class="p-3 mt-auto">
+    <!-- Spring Security logout (POST) -->
+    <form th:action="@{/logout}" method="post" class="d-grid gap-2">
+      <button class="btn btn-outline-light" type="submit">
+        <i class="fas fa-sign-out-alt me-2"></i> Logout
+      </button>
+    </form>
+  </div>
+</nav>

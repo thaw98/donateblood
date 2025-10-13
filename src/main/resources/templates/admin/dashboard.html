@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+  <!-- Head -->
+  <th:block th:replace="fragments/head :: head(${title})"></th:block>
+
+  <body>
+    <!-- Sidebar -->
+    <div th:replace="fragments/sidebar :: sidebar(${active})"></div>
+
+    <!-- Main Content -->
+    <div id="content">
+      <!-- Top nav -->
+      <div th:replace="fragments/topnav :: topnav(${userName}, ${notifications}, ${avatarUrl})"></div>
+
+      <!-- Page content -->
+      <main class="container-fluid p-4">
+        <!-- Header -->
+          <h2 class="mb-0">Dashboard</h2>
+ 
+      </main>
+    </div>
+
+    <!-- JS loaded directly (no scripts fragment) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
+  </body>
+</html>

@@ -1,0 +1,39 @@
+<!-- top nav fragment -->
+<nav class="navbar navbar-expand-lg" th:fragment="topnav(userName, notifications, avatarUrl)">
+  <div class="container-fluid">
+    <button type="button" id="sidebarCollapse" class="btn btn-danger">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="ms-auto d-flex align-items-center">
+      <div class="dropdown me-3">
+        <button class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="fas fa-bell"></i>
+          <span class="badge bg-danger" th:text="${#lists.size(notifications) ?: 0}">0</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li th:if="${#lists.isEmpty(notifications)}">
+            <span class="dropdown-item-text text-muted">No notifications</span>
+          </li>
+          <li th:each="n : ${notifications}">
+            <a class="dropdown-item" th:text="${n}">Notification</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="dropdown">
+        <button class="btn btn-outline-danger dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+          <img th:src="${avatarUrl} ?: 'https://ui-avatars.com/api/?name=' + ${#strings.replace(userName,' ','+')} + '&background=random'"
+               class="rounded-circle me-2" width="32" height="32" alt="User"/>
+          <span th:text="${userName}">Admin User</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" th:href="@{/admin/profile}"><i class="fas fa-user me-2"></i> Profile</a></li>
+          <li><a class="dropdown-item" th:href="@{/admin/settings}"><i class="fas fa-cog me-2"></i> Settings</a></li>
+          <li><hr class="dropdown-divider"/></li>
+          <li><a class="dropdown-item" th:href="@{/logout}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
