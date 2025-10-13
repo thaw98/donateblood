@@ -3,6 +3,7 @@ package com.grppj.donateblood.repository;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -26,6 +27,19 @@ public class HospitalRepository {
                 h.setPhone(rs.getString("phoneNo")); // map 'contact' to 'phone'
                 return h;
             });
+    }
+    
+    /** Returns hospital_name by id, or null if not found. */
+    public String findNameById(int hospitalId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                "SELECT hospital_name FROM hospital WHERE id = ?",
+                String.class,
+                hospitalId
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
     }
 
 }

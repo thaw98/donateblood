@@ -53,10 +53,4 @@ public class AppointmentAdminController {
         return "redirect:/admin/donors/appointments";
     }
 
-    /** Optional alias – treat cancel as reject of a pending request. */
-    @PostMapping("/donors/appointments/{id}/cancel")
-    public String cancel(@PathVariable int id) {
-        apptRepo.updateStatusIfPending(id, "rejected");
-        return "redirect:/admin/donors/appointments";
-    }
 }
