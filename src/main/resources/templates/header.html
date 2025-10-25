@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="header">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeSaver - Blood Donation Center</title>
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+<header id="mainHeader">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm w-100">
+    <div class="container-fluid">
+      <!-- Left: Logo -->
+      <a class="navbar-brand d-flex align-items-center" href="#" style="color: #dc3545;">
+        <i class="fas fa-tint me-2 text-danger" style="font-size: 3rem;"></i>
+        <span>LifeSaver</span>
+      </a>
+
+      <!-- Mobile toggle -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- Center links -->
+<div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+    <ul class="navbar-nav text-center">
+        <li class="nav-item"><a class="nav-link" th:href="@{/}">Home</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/#info}">About</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/#eligibility}">Eligibility</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/#locations}">Locations</a></li>
+    </ul>
+</div>
+
+
+      <!-- Right: Donate + Icon -->
+      <div class="d-flex align-items-center ms-auto gap-3">
+        <!-- Donate Now button -->
+        <button type="button" class="btn btn-danger" id="donateNowBtn">
+          <i class="fas fa-hand-holding-heart me-1"></i> Donate Now
+        </button>
+
+        <!-- User icon dropdown -->
+        <div class="dropdown">
+          <button class="nav-icon-btn" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-circle"></i>
+          </button>
+
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" th:href="@{/login}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Blood Requests</title></head>
+<body>
+<h1>Blood Requests – Hospital [[${hospitalId}]]</h1>
+<p><a th:href="@{/admin/requests/add(hospitalId=${hospitalId})}">Create Request</a></p>
+<table border="1" cellpadding="6">
+  <tr>
+    <th>#</th><th>Blood Type</th><th>Quantity</th><th>Urgency</th><th>Required</th><th>Status</th><th>Action</th>
+  </tr>
+  <tr th:each="r,idx : ${pending}">
+    <td th:text="${idx.count}">1</td>
+    <td th:text="${r.blood_type}">A+</td>
+    <td th:text="${r.quantity}">2</td>
+    <td th:text="${r.urgency}">High</td>
+    <td th:text="${r.required_date}">2025-10-12</td>
+    <td th:text="${r.status}">pending</td>
+    <td>
+      <form th:action="@{/admin/requests/{id}/fulfill(id=${r.id}, hospitalId=${hospitalId})}" method="post">
+        <button type="submit">Fulfill</button>
+      </form>
+    </td>
+  </tr>
+</table>
+<p><a th:href="@{/admin/bloodstock(hospitalId=${hospitalId})}">View Stock</a></p>
+</body>
+</html>

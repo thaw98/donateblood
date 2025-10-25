@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<link th:href="@{/css/register.css}" rel="stylesheet" type="text/css"> 
+<link th:href="@{/css/style.css}" rel="stylesheet" type="text/css"> 
+
+<head th:replace="~{header}"></head>
+
+<body>
+<div class="container">
+    <div class="registration-container">
+        <div class="form-header">
+            <h2><span class="blood-drop">🩸</span> Become a Blood Donor</h2>
+            <p>Join our community of lifesavers. Your registration takes just a few minutes.</p>
+        </div>
+
+        <form th:action="@{/register}" th:object="${userObj}" method="post" enctype="multipart/form-data" class="form-body" onsubmit="return validateForm()">
+
+			<div class="mb-3 text-center position-relative">
+    		<label for="filePart" class="form-label d-block fw-bold">Profile Photo</label>
+
+    		<!-- Circle preview container -->
+    		<div class="profile-upload position-relative mx-auto">
+        	<!-- Preview image -->
+        	<img id="previewImage" 
+             src="https://cdn-icons-png.flaticon.com/512/149/149071.png" 
+             alt="Profile Preview" 
+             class="rounded-circle border preview-img">
+
+        	<!-- Camera icon overlay -->
+        	<div class="camera-overlay" onclick="document.getElementById('filePart').click()">
+            <i class="fas fa-camera"></i>
+        	</div>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="filePart" th:field="*{filePart}" accept="image/*" style="display: none;">
+</div>
+
+            <!-- Username -->
+            <div class="mb-3">
+                <label for="username" class="form-label">Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="username" th:field="*{username}" placeholder="Enter your full name" oninput="validateFieldInstant('username','usernameError','Name is required')">
+                <small class="text-danger" id="usernameError"></small>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="like...@gmail.com" oninput="validateFieldInstant('email','emailError','Enter a valid Gmail')">
+                <small class="text-danger" id="emailError"></small>
+            </div>
+
+            <!-- Phone -->
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="phone" th:field="*{phone}" 
+                    placeholder="09xxxxxxxxx" 
+                    oninput="validatePhoneInstant()">
+                <small class="text-danger" id="phoneError"></small>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" th:field="*{password}" id="password" placeholder="Create a strong password" 
+                    oninput="checkStrength(); validatePasswordMatchInstant(); validateFieldInstant('password','passwordError','Password is required')">
+                <input type="checkbox" onclick="togglePassword('password')"> Show Password
+                <span id="strengthMsg" style="margin-left:10px;"></span>
+                <div id="strengthBar" style="width:150px; height:5px; background:#ccc; border-radius:5px; margin-top:5px;">
+                    <div id="strengthFill" style="height:5px; width:0%; border-radius:5px;"></div>
+                </div>
+                <small class="text-danger" id="passwordError"></small>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" th:field="*{confirmPassword}" id="confirmPassword" placeholder="Re-enter your password"
+                    oninput="validatePasswordMatchInstant(); validateFieldInstant('confirmPassword','passwordError','Confirmation password is required')">
+                <input type="checkbox" onclick="togglePassword('confirmPassword')"> Show Password
+                <small class="text-danger" id="passwordError"></small>
+            </div>
+
+            <!-- Gender -->
+            <div class="mb-3">
+                <label class="form-label">Gender <span class="text-danger">*</span></label><br>
+                <input type="radio" th:field="*{gender}" value="Male" onchange="validateGenderInstant()"> Male
+                <input type="radio" th:field="*{gender}" value="Female" onchange="validateGenderInstant()"> Female
+                <small class="text-danger" id="genderError"></small>
+            </div>
+
+            <!-- DOB -->
+            <div class="mb-3">
+                <label for="dateofbirth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="dateofbirth" th:field="*{dateofbirth}" onchange="validateDOBInstant()">
+                <small class="text-danger" id="dobError"></small>
+                <small id="dobFormatted" style="color:green; display:block; margin-top:5px;"></small>
+            </div>
+
+            <!-- Address -->
+            <div class="mb-3">
+                <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                <textarea class="form-control" th:field="*{address}" rows="3" id="address" placeholder="Sample: Yangon, Hlaing, Street No.10"
+                    oninput="validateFieldInstant('address','addressError','Address is required')"></textarea>
+                <small class="text-danger" id="addressError"></small>
+            </div>
+
+            <!-- Role -->
+            <div class="mb-3">
+                <label for="role" class="form-label">I want to register as a: <span class="text-danger">*</span></label>
+                <select class="form-select" id="role" th:field="*{role.id}" onchange="validateFieldInstant('role','roleError','Select your role')">
+                    <option value="" disabled selected>Select your role</option>
+                    <option th:each="r : ${roleList}" th:value="${r.id}" th:text="${r.role}"></option>
+                </select>
+                <small class="text-danger" id="roleError"></small>
+            </div>
+
+            <button type="submit" class="btn btn-register">Complete Registration</button>
+        </form>
+
+        <div class="form-footer">
+            <p>Already have an account? <a th:href="@{/login}" class="nav-link">Sign in here</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show error once, hide after 5 sec
+function showErrorOnce(element, message) {
+    element.textContent = message;
+    setTimeout(() => { element.textContent = ""; }, 5000);
+}
+
+// Toggle password visibility
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    field.type = field.type === "password" ? "text" : "password";
+}
+
+// Max date today
+document.addEventListener("DOMContentLoaded", function() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2,'0');
+    const dd = String(today.getDate()).padStart(2,'0');
+    document.getElementById("dateofbirth").setAttribute("max", `${yyyy}-${mm}-${dd}`);
+});
+
+// Password strength
+function checkStrength() {
+    const password = document.getElementById("password").value;
+    const strengthMsg = document.getElementById("strengthMsg");
+    const strengthFill = document.getElementById("strengthFill");
+
+    if (!password) { strengthMsg.textContent = ""; strengthFill.style.width = "0%"; return; }
+
+    let strength = 0;
+    if(password.length >= 6) strength++;
+    if(/[A-Z]/.test(password)) strength++;
+    if(/[a-z]/.test(password)) strength++;
+    if(/[0-9]/.test(password)) strength++;
+    if(/[^A-Za-z0-9]/.test(password)) strength++;
+
+    let color="", msg="", width="";
+    if(strength <= 2) { color="red"; msg="Weak 🔴"; width="40%"; }
+    else if(strength <= 4) { color="orange"; msg="Medium 🟠"; width="70%"; }
+    else { color="green"; msg="Strong 🟢"; width="100%"; }
+
+    strengthFill.style.width = width;
+    strengthFill.style.background = color;
+    strengthMsg.textContent = msg;
+    strengthMsg.style.color = color;
+}
+
+// Instant validation for empty field
+function validateFieldInstant(fieldId, errorId, message) {
+    const value = document.getElementById(fieldId).value.trim();
+    if (!value) showErrorOnce(document.getElementById(errorId), message);
+}
+
+// Instant password match check
+function validatePasswordMatchInstant() {
+    const password = document.getElementById("password").value;
+    const confirm = document.getElementById("confirmPassword").value;
+    if (password && confirm && password !== confirm) showErrorOnce(document.getElementById("passwordError"), "Passwords do not match");
+}
+
+// Gender
+function validateGenderInstant() {
+    const male = document.querySelector("input[value='Male']").checked;
+    const female = document.querySelector("input[value='Female']").checked;
+    if (!male && !female) showErrorOnce(document.getElementById("genderError"), "Select your gender");
+}
+
+// DOB
+function validateDOBInstant() {
+    const dob = document.getElementById("dateofbirth").value;
+    const dobError = document.getElementById("dobError");
+    const dobFormatted = document.getElementById("dobFormatted");
+    if (!dob) { showErrorOnce(dobError,"Date of birth is required"); dobFormatted.textContent = ""; return false; }
+    const selected = new Date(dob);
+    const today = new Date();
+    if (selected > today) { showErrorOnce(dobError,"You cannot select a future date"); dobFormatted.textContent = ""; return false; }
+    const day = String(selected.getDate()).padStart(2,'0');
+    const month = String(selected.getMonth()+1).padStart(2,'0');
+    const year = selected.getFullYear();
+    dobFormatted.textContent = `Selected Date: ${day}-${month}-${year}`;
+    return true;
+}
+
+// Phone instant validation
+function validatePhoneInstant() {
+    const phone = document.getElementById("phone").value.trim();
+    const phoneError = document.getElementById("phoneError");
+    const phoneRegex = /^09\d{7,9}$/; // Myanmar phone number example
+
+    if (!phone) {
+        showErrorOnce(phoneError, "Phone number is required");
+        return false;
+    } else if (!phoneRegex.test(phone)) {
+        showErrorOnce(phoneError, "Enter a valid phone number");
+        return false;
+    } else {
+        phoneError.textContent = "";
+        return true;
+    }
+}
+
+// Form submit validation (all missing fields show errors)
+function validateForm() {
+    let isValid = true;
+
+    const username = document.getElementById("username").value.trim();
+    if (!username) { showErrorOnce(document.getElementById("usernameError"), "Name is required"); isValid = false; }
+
+    const email = document.getElementById("email").value.trim();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    if (!email || !emailRegex.test(email)) { showErrorOnce(document.getElementById("emailError"), "Enter a valid Gmail"); isValid = false; }
+
+    if (!validatePhoneInstant()) isValid = false;
+
+    const password = document.getElementById("password").value;
+    if (!password) { showErrorOnce(document.getElementById("passwordError"), "Password is required"); isValid = false; }
+
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    if (!confirmPassword) { showErrorOnce(document.getElementById("passwordError"), "Confirmation password is required"); isValid = false; }
+
+    if (password && confirmPassword && password !== confirmPassword) { showErrorOnce(document.getElementById("passwordError"), "Passwords do not match"); isValid = false; }
+
+    const male = document.querySelector("input[value='Male']").checked;
+    const female = document.querySelector("input[value='Female']").checked;
+    if (!male && !female) { showErrorOnce(document.getElementById("genderError"), "Select your gender"); isValid = false; }
+
+    if (!validateDOBInstant()) isValid = false;
+
+    const address = document.getElementById("address").value.trim();
+    if (!address) { showErrorOnce(document.getElementById("addressError"), "Address is required"); isValid = false; }
+
+    const role = document.getElementById("role").value;
+    if (!role) { showErrorOnce(document.getElementById("roleError"), "Select your role"); isValid = false; }
+
+    return isValid;
+}
+
+document.getElementById('filePart').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('previewImage');
+            preview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+	
+</script>
+</body>
+</html>  

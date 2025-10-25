@@ -1,0 +1,99 @@
+<!-- src/main/resources/templates/admin/request-donors.html -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Request Donors</title>
+  <th:block th:replace="fragments/head :: head('Request Donors')"></th:block>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+  <style>
+    .table-card{background:#fff;border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.06);overflow:hidden;}
+    .table-card-header{background:#1f2937;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;}
+.btn-back{
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #b71c1c 100%);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:.6rem 1.2rem;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  gap:.35rem;
+  text-decoration:none;
+  transition: background .15s ease-in-out;
+}
+
+.btn-back:hover{
+  background: linear-gradient(135deg, #a61e1e 0%, #9b1515 100%);
+}
+  </style>
+</head>
+<body>
+  <div th:replace="fragments/sidebar :: sidebar(${active})"></div>
+  <div id="content">
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+    <main class="container-fluid p-4">
+      <div class="mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-people page-header-icon"></i>
+          <div>
+			<h2 class="mb-0 fw-bold">
+			  Donors for <span th:text="${recipientName}">Recipient</span>
+			  (Request #<span th:text="${requestId}">0</span>)
+			</h2>
+            <p class="text-muted mb-0">
+              <i class="bi bi-arrow-right-short"></i>
+              Total donors used: <strong th:text="${count}">0</strong>
+            </p>
+          </div>
+        </div>
+		<a class="btn-back" th:href="@{/admin/fulfillment}">
+		  <i class="bi bi-arrow-left"></i>
+		  Back to Fulfillment
+		</a>
+      </div>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <i class="bi bi-list-check"></i>
+          <span>Donor Units Applied</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>No</th>
+                <th>Donor</th>
+                <th>Email</th>
+                <th>Blood Type</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Successful Date &amp; Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="r, i : ${rows}">
+                <td th:text="${i.count}">1</td>
+                <td th:text="${r.donorName}">John Doe</td>
+                <td th:text="${r.donorEmail}">john@mail.com</td>
+                <td><span class="badge bg-danger" th:text="${r.bloodType}">A+</span></td>
+                <td th:text="${r.donorPhone} ?: '-'">-</td>
+                <td th:text="${r.donorAddress} ?: '-'">-</td>
+                <td th:text="${r.fulfillmentTime}">2025-10-23 10:30PM</td>
+              </tr>
+              <tr th:if="${rows == null or #lists.isEmpty(rows)}">
+                <td colspan="7" class="text-center py-5 text-muted">
+                  <i class="bi bi-inbox me-2"></i>No donor records for this request
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <link th:href="@{/css/style.css}" rel="stylesheet" type="text/css"> 
+  <head th:replace="~{headerR}"></head>
+
+<body>
+    
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <h2>Donate Blood, Save Lives</h2>
+            <p>Every drop counts. Join our community of heroes and help us ensure that no one suffers due to lack of blood.</p>
+             <a th:href="@{/bloodrequest/form}" class="cta-button">Schedule Donation</a>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats">
+        <div class="container stats-container">
+            <div class="stat-item"><div class="stat-number">10,000+</div><div class="stat-text">Lives Saved</div></div>
+            <div class="stat-item"><div class="stat-number">5,000+</div><div class="stat-text">Regular Donors</div></div>
+            <div class="stat-item"><div class="stat-number">50+</div><div class="stat-text">Donation Centers</div></div>
+            <div class="stat-item"><div class="stat-number">24/7</div><div class="stat-text">Emergency Service</div></div>
+        </div>
+    </section>
+
+    <!-- Info Section -->
+    <section class="info" id="info">
+        <div class="container">
+            <div class="section-title"><h2>Why Donate Blood?</h2><p>Your blood donation can make a significant difference in someone's life. Here's why it matters:</p></div>
+            <div class="info-cards">
+                <div class="info-card"><i class="fas fa-heartbeat"></i><h3>Saves Lives</h3><p>One donation can save up to three lives.</p></div>
+                <div class="info-card"><i class="fas fa-user-md"></i><h3>Health Benefits</h3><p>Regular donation reduces risk of heart disease and maintains healthy iron levels.</p></div>
+                <div class="info-card"><i class="fas fa-users"></i><h3>Community Support</h3><p>Join a community ensuring blood supply for everyone.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Eligibility Section -->
+    <section class="eligibility" id="eligibility">
+        <div class="container">
+            <div class="section-title"><h2>Am I Eligible to Donate?</h2><p>Check if you meet the basic requirements to become a blood donor</p></div>
+            <div class="eligibility-content">
+                <div class="eligibility-image"><img src="https://images.unsplash.com/photo-1584634731339-252c581abfc5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80" alt="Blood Donation"></div>
+                <div class="eligibility-text">
+                    <h3>Basic Eligibility Criteria</h3>
+                    <ul class="eligibility-list">
+                        <li><i class="fas fa-check-circle"></i> Be in good general health and feeling well</li>
+                        <li><i class="fas fa-check-circle"></i> Be at least 18 years old</li>
+                        <li><i class="fas fa-check-circle"></i> Weigh at least 110 pounds</li>
+                        <li><i class="fas fa-check-circle"></i> Not have donated blood in the last 125 days</li>
+                        <li><i class="fas fa-check-circle"></i> Pass the physical and health history assessment</li>
+                        <li><i class="fas fa-check-circle"></i> Have valid identification with photo</li>
+                    </ul>
+                    <p>Some conditions or medications may prevent donation temporarily or permanently.</p>
+                    <a href="javascript:void(0)" class="cta-button" id="showEligibilityFormBtn" style="margin-top:20px;display:inline-block;">Check Eligibility</a>
+                    
+                    <div id="eligibilityFormContainer" style="margin-top:20px; display:none;">
+                        <form id="eligibilityForm">
+                            <div class="form-group">
+                                <label>Are you in good general health and feeling well?</label>
+                                <select id="health" class="form-control" required><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Are you at least 17 years old?</label>
+                                <select id="age" class="form-control" required><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Do you weigh at least 110 pounds?</label>
+                                <select id="weight" class="form-control" required><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Have you donated blood in the last 56 days?</label>
+                                <select id="recentDonation" class="form-control" required><option value="">Select</option><option value="no">No</option><option value="yes">Yes</option></select>
+                            </div>
+                            <button type="submit" class="cta-button" style="width:100%;margin-top:10px;">Check Eligibility</button>
+                        </form>
+                        <div id="eligibilityResult" style="margin-top:15px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+     <section class="locations" id="locations">
+  <div class="container">
+    <div class="section-title">
+      <h2>Our Donation Locations</h2>
+      <p>Click on a hospital to view details or visit directly.</p>
+    </div>
+
+    <div class="info-cards">
+      <div class="info-card" th:each="hospital : ${hospitalList}">
+        <i class="fas fa-hospital"></i>
+        <h3 th:text="${hospital.hospitalName}"></h3>
+
+        <p>
+          <strong>Address:</strong>
+          <span th:text="${hospital.address}"></span>
+        </p>
+
+        <p><strong>Phone:</strong> <span th:text="${hospital.phoneNo}"></span></p>
+        <p><strong>Email:</strong> <span th:text="${hospital.gmail}"></span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+    <!-- Donation Process -->
+    <section class="process" id="process">
+        <div class="container">
+            <div class="section-title"><h2>The Donation Process</h2><p>Donating blood is simple and takes less than an hour.</p></div>
+            <div class="process-steps">
+                <div class="step"><div class="step-number">1</div><h3>Registration</h3><p>Complete the donor registration form.</p></div>
+                <div class="step"><div class="step-number">2</div><h3>Health Screening</h3><p>Answer health questions and receive a mini-physical.</p></div>
+                <div class="step"><div class="step-number">3</div><h3>Donation</h3><p>The actual donation takes about 8-10 minutes.</p></div>
+                <div class="step"><div class="step-number">4</div><h3>Refreshments</h3><p>Enjoy snacks and drinks while you rest for 10-15 minutes.</p></div>
+            </div>
+        </div>
+    </section>
+
+
+    <div th:replace="~{footer}"></div>
+</body>
+</html>
