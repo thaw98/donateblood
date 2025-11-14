@@ -1,0 +1,226 @@
+<div th:fragment="editProfileForm">
+    <div class="container">
+        <div class="registration-container">
+            <div class="form-header">
+                <h2><span class="blood-drop">🩸</span> Update Your Profile</h2>
+                <p>Keep your donor information up to date</p>
+            </div>
+
+            <form id="editProfileForm" th:action="@{/profile/update}" th:object="${user}" method="post" class="form-body">
+                
+                <!-- Personal Details -->
+                <div class="form-section">
+                    <h4 class="section-title"><i class="fas fa-user"></i> Personal Details</h4>
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="username" th:field="*{username}" placeholder="Enter your full name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Enter your email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="Leave blank to keep current password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+    					<label for="phone" class="form-label">Phone Number</label>
+    					<input type="text" class="form-control" id="phone" th:field="*{phone}" placeholder="09xxxxxxxxx" required>
+					</div>
+                    
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" th:field="*{address}" rows="3" placeholder="Enter your full address" required></textarea>
+                    </div>
+                </div>
+
+                <!-- Medical Info (Disabled) -->
+                <div class="form-section disabled-section">
+                    <h4 class="section-title"><i class="fas fa-heartbeat"></i> Medical Information <span class="locked-badge"><i class="fas fa-lock"></i> Verified</span></h4>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Gender</label>
+                        <div class="gender-options">
+                            <div class="gender-option">
+                                <input type="radio" th:field="*{gender}" value="Male" disabled> Male
+                            </div>
+                            <div class="gender-option">
+                                <input type="radio" th:field="*{gender}" value="Female" disabled> Female
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="dateofbirth" class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" th:value="*{dateofbirth}" disabled>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select" th:field="*{role.id}" disabled>
+                            <option th:value="${user.role.id}" th:text="${user.role.role}"></option>
+                        </select>
+                    </div>
+                     <div class="mb-3">
+    					<label for="bloodType" class="form-label">Blood Type</label>
+    					<input type="text" class="form-control" 
+           				th:value="${bloodTypeName}" 
+           				disabled>
+    					<input type="hidden" th:field="*{bloodTypeId}">
+					</div>
+                 
+                </div>
+
+                <button type="submit" class="btn btn-register mt-3">Update Profile</button>
+            </form>
+            
+            <div id="editProfileMsg" class="message-container mt-3"></div>
+        </div>
+    </div>
+
+    <style>
+        /* Modern edit profile styling based on your registration page */
+        :root {
+            --primary-red: #dc2626;
+            --dark-red: #b91c1c;
+            --light-red: #fef2f2;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --white: #ffffff;
+        }
+
+        .registration-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            color: var(--white);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .form-header h2 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .form-header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+        }
+
+        .form-body {
+            padding: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            color: var(--primary-red);
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select, textarea.form-control {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus, textarea.form-control:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 0.25rem rgba(220, 38, 38, 0.25);
+        }
+
+        .gender-options {
+            display: flex;
+            gap: 20px;
+        }
+
+        .gender-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-register {
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.3);
+        }
+
+        .disabled-section {
+            background: var(--light-red);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .locked-badge {
+            background: #f8f9fa;
+            color: #6c757d;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            border: 1px solid #e9ecef;
+            margin-left: auto;
+        }
+
+        .blood-drop {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .form-body {
+                padding: 20px;
+            }
+            
+            .gender-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</div>

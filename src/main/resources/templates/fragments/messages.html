@@ -1,0 +1,35 @@
+<div th:fragment="messagesSection" class="messages-section">
+  <div th:if="${#lists.isEmpty(messages)}" class="alert alert-warning text-center">
+    No messages yet.
+  </div>
+
+  <div th:if="${!#lists.isEmpty(messages)}" class="message-history">
+    <div th:each="msg : ${messages}"
+         class="message-item"
+         th:classappend="${msg.read} ? 'read' : 'unread'"
+         th:attr="data-msgid=${msg.id},
+                  data-msg=${msg.message},
+                  data-createdat=${msg.createdAt},
+                  data-sendername=${msg.senderName}">
+
+      <div class="message-bubble" th:classappend="${msg.read} ? 'bubble-read' : 'bubble-unread'">
+        <p class="mb-1">
+          <strong th:text="${msg.senderName}"></strong>
+          <span th:text="${msg.message}"></span>
+        </p>
+
+
+        <span class="message-time" th:text="${#temporals.format(msg.createdAt, 'HH:mm')}"></span>
+      </div>
+    </div>
+  </div>
+    <!-- Popup -->
+    <div id="messagePopup" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div><strong>From: </strong><span id="popupSenderName"></span></div>
+            <div id="popupMessageText"></div>
+            <div id="popupMessageDate"></div>
+        </div>
+    </div>
+</div>

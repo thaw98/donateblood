@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="fragments/head :: head('My Profile')"></th:block>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        .profile-container { max-width: 900px; margin: 2rem auto; }
+        .profile-card { background: #fff; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display:flex; flex-wrap:wrap; overflow:hidden; }
+        .profile-header { background: linear-gradient(135deg, var(--primary-color), #667eea); color:white; padding:2rem; width:100%; text-align:center; }
+        .profile-header h2 { margin:0; font-weight:600; }
+        .profile-pic-section { flex:1 1 300px; padding:2rem; text-align:center; background-color:#f8f9fa; border-right:1px solid #e9ecef; position:relative; }
+        .profile-pic-section img { width:180px; height:180px; object-fit:cover; border-radius:50%; border:5px solid #fff; box-shadow:0 4px 15px rgba(0,0,0,0.15); margin-bottom:1rem; display:block; margin:auto; }
+        .form-section { flex:2 1 500px; padding:2rem; }
+        .form-section .form-group { margin-bottom:1.5rem; }
+        .form-section label { font-weight:600; color:#495057; margin-bottom:0.5rem; display:block; }
+        .form-section .form-control { border-radius:8px; border:1px solid #ced4da; padding:0.75rem 1rem; transition:border-color 0.3s, box-shadow 0.3s; width:100%; }
+        .form-section .form-control:focus { border-color:var(--primary-color); box-shadow:0 0 0 0.2rem rgba(102,126,234,0.25); }
+        .btn-save { background:linear-gradient(135deg, var(--primary-color), #667eea); border:none; color:white; padding:0.75rem 2.5rem; font-size:1rem; font-weight:600; border-radius:8px; cursor:pointer; }
+        .btn-save:hover { transform:translateY(-2px); box-shadow:0 5px 15px rgba(102,126,234,0.4); }
+        .alert { border-radius:10px; padding:1rem 1.5rem; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div th:replace="fragments/superadmin-sidebar :: superadmin-sidebar('profile')"></div>
+
+    <!-- Main Content -->
+    <div id="content">
+        <div th:replace="fragments/superadmin-topnav :: superadminTopnav"></div>
+
+
+        <main class="container-fluid p-4">
+            <div class="profile-container">
+                <!-- Flash Messages -->
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <span th:text="${success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <h2><i class="bi bi-person-circle me-2"></i>My Profile</h2>
+                    </div>
+
+                    <!-- Profile Image Section -->
+                    <div class="profile-pic-section">
+                        <!-- User Image -->
+                        <img th:if="${user.imageBytes != null}" 
+                             th:src="@{/superadmin/user/{id}/image(id=${user.id})}" 
+                             alt="Profile Picture" 
+                             id="profilePreview">
+                        <img th:if="${user.imageBytes == null}" 
+                             th:src="@{/images/default-avatar.jpg}" 
+                             alt="Default Profile" 
+                             id="profilePreview">
+
+                        <!-- Plus Icon Overlay -->
+                        <label for="filePart" 
+                               style="
+                                   position: absolute;
+                                   bottom: 0;
+                                   right: 0;
+                                   background-color: #667eea;
+                                   width: 40px;
+                                   height: 40px;
+                                   border-radius: 50%;
+                                   display: flex;
+                                   align-items: center;
+                                   justify-content: center;
+                                   color: white;
+                                   cursor: pointer;
+                                   border: 2px solid #fff;
+                                   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                               ">
+                            <i class="fas fa-plus"></i>
+                        </label>
+
+                        <!-- Hidden File Input -->
+                        <input type="file" id="filePart" name="filePart" accept="image/*" style="display:none;" onchange="uploadProfileImage(event)">
+                    </div>
+
+                    <!-- Profile Form -->
+                    <form th:action="@{/superadmin/profile/update}" method="post" class="form-section">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="username">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" th:value="${user.username}" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" th:value="${user.email}" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="phone">Phone</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" th:value="${user.phone}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label for="address">Address</label>
+                                <input type="text" class="form-control" id="address" name="address" th:value="${user.address}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password (leave blank to keep current)</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                        <button type="submit" class="btn-save mt-3">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function uploadProfileImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Preview immediately
+            const reader = new FileReader();
+            reader.onload = function() {
+                document.getElementById('profilePreview').src = reader.result;
+            };
+            reader.readAsDataURL(file);
+
+            // Upload via AJAX
+            const formData = new FormData();
+            formData.append('filePart', file);
+
+            fetch('/superadmin/profile/update-image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(resp => resp.text())
+            .then(result => {
+                if(result === 'success') {
+                    console.log('Profile image updated.');
+                } else {
+                    alert('Failed to update profile image.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error uploading image.');
+            });
+        }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

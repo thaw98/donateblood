@@ -1,0 +1,75 @@
+<!-- fragments/editAppointmentForm.html -->
+<div th:fragment="editAppointmentFormFragment">
+  <div class="appointment-container">
+    <div class="appointment-card">
+      <div class="appointment-header">
+        <h2><i class="fas fa-calendar-plus me-2"></i>Edit Appointment</h2>
+        <p>Update your blood donation appointment</p>
+      </div>
+
+      <div class="appointment-body">
+        <form id="editAppointmentForm" th:action="@{/profile/update-appointment}" method="post">
+          <!-- Hidden ID -->
+          <input type="hidden" name="id" th:value="${appointment.id}" />
+
+          <!-- Date & Time -->
+          <div class="form-row">
+            <div class="form-group icon-input">
+              <i class="fas fa-calendar-day"></i>
+              <label for="date" class="form-label">Date</label>
+              <input type="date" id="date" name="date" th:value="${appointment.date}" class="form-control" required>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="form-group icon-input">
+              <i class="fas fa-clock"></i>
+              <label for="time" class="form-label">Time</label>
+              <select id="time" name="time" class="form-select" required>
+                <!-- JS will populate options -->
+              </select>
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+  
+  		<div class="form-group icon-input">
+            <i class="fas fa-tint"></i>
+            <label for="bloodType" class="form-label">Blood Type</label>
+            <input type="text" class="form-control" 
+                   th:value="${bloodTypeName}" 
+                   disabled
+                   readonly>
+            
+            <!-- Hidden field to include bloodTypeId in form submission -->
+            <input type="hidden" name="bloodTypeId" th:value="${appointment.bloodTypeId}">
+            <div class="invalid-feedback"></div>
+          </div>
+
+          <!-- Hospital -->
+          <div class="form-group icon-input">
+            <i class="fas fa-hospital"></i>
+            <label for="hospital" class="form-label">Hospital</label>
+            <select id="hospital" name="hospitalId" class="form-select" required>
+              <option value="" disabled>Select Hospital</option>
+              <option th:each="hosp : ${hospitals}" 
+                      th:value="${hosp.id}" 
+                      th:text="${hosp.hospitalName}"
+                      th:selected="${hosp.id} == ${appointment.hospitalId}">
+              </option>
+            </select>
+            <div class="invalid-feedback"></div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="form-buttons mt-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-calendar-check me-2"></i>Update Appointment
+            </button>
+            <button type="button" class="btn btn-secondary btn-cancel">
+              <i class="fas fa-times me-2"></i>Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

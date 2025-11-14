@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="fragments/head :: head('Hospital Profile')"></th:block>
+    <style>
+        /* ===================== Dashboard Stats Cards ===================== */
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid;
+            height: 100%;
+            position: relative;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        .stats-card.hospitals { border-left-color: #667eea; background: linear-gradient(135deg, rgba(102,126,234,0.08) 0%, white 100%); }
+        .stats-card.admins { border-left-color: #43e97b; background: linear-gradient(135deg, rgba(67,233,123,0.08) 0%, white 100%); }
+        .stats-card.assigned { border-left-color: #4895ef; background: linear-gradient(135deg, rgba(72,149,239,0.08) 0%, white 100%); }
+        .stats-card.status { border-left-color: #ffc107; background: linear-gradient(135deg, rgba(255,193,7,0.08) 0%, white 100%); }
+
+        .stats-icon {
+            font-size: 3rem;
+            opacity: 0.25;
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .stats-card.hospitals .stats-icon { color: #667eea; }
+        .stats-card.admins .stats-icon { color: #43e97b; }
+        .stats-card.assigned .stats-icon { color: #4895ef; }
+        .stats-card.status .stats-icon { color: #ffc107; }
+
+        .stats-value { font-size: 2.5rem; font-weight: 700; margin: 0; }
+        .stats-label { font-size: 0.95rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .stats-change { font-size: 0.85rem; margin-top: 0.5rem; }
+        .stats-change.positive { color: #198754; }
+
+        /* ===================== Form Card ===================== */
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .form-header {
+            background: linear-gradient(135deg, rgba(102,126,234,0.08) 0%, rgba(102,126,234,0.02) 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            color: #667eea;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .card-body { padding: 1.5rem; }
+
+        /* ===================== Carousel ===================== */
+        .carousel-image { height: 300px; object-fit: cover; border-radius: 8px; width: 100%; }
+        .carousel-control-prev,
+        .carousel-control-next { width: 5%; opacity: 0.7; }
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover { opacity: 1; }
+
+        /* Placeholder if no images */
+        .image-placeholder {
+            height: 300px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(102,126,234,0.05) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            border-radius: 8px;
+            border: 2px dashed #667eea;
+        }
+
+        /* ===================== Table ===================== */
+        .table { margin-bottom: 0; }
+        .table th { background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; padding: 1rem; width: 30%; }
+        .table td { padding: 1rem; vertical-align: middle; border-color: #e9ecef; }
+        .table-borderless td,
+        .table-borderless th { border: none; }
+
+        /* ===================== Badges ===================== */
+        .badge { padding: 0.5rem 0.75rem; border-radius: 6px; font-weight: 600; }
+        .badge-primary { background: linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(102,126,234,0.05) 100%); color: #667eea; border: 1px solid rgba(102,126,234,0.3); }
+        .badge-success { background: linear-gradient(135deg, rgba(67,233,123,0.15) 0%, rgba(67,233,123,0.05) 100%); color: #198754; border: 1px solid rgba(67,233,123,0.3); }
+
+        /* ===================== Buttons ===================== */
+        .btn-primary { background-color: #667eea; border-color: #667eea; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 600; transition: all 0.3s; }
+        .btn-primary:hover { background-color: #5a6fd8; border-color: #5a6fd8; transform: translateY(-2px); }
+        .btn-outline-secondary { border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 600; transition: all 0.3s; }
+        .btn-outline-secondary:hover { transform: translateY(-2px); }
+
+        /* ===================== Alerts ===================== */
+        .alert { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .alert-success { background: linear-gradient(135deg, rgba(67,233,123,0.1) 0%, white 100%); border-left: 4px solid #43e97b; color: #198754; }
+        .alert-danger { background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, white 100%); border-left: 4px solid #dc3545; color: #dc3545; }
+
+        /* ===================== Page Header ===================== */
+        .page-header h2 { color: #667eea; }
+        .text-muted { color: #6c757d !important; }
+
+        /* ===================== Admin Badges ===================== */
+        .admin-badge {
+            display: inline-flex; align-items: center; background: rgba(67,233,123,0.1);
+            color: #198754; padding: 0.5rem 0.75rem; border-radius: 6px; margin: 0.25rem; border: 1px solid rgba(67,233,123,0.3);
+        }
+        .admin-badge i { margin-right: 0.5rem; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div th:replace="fragments/superadmin-sidebar :: superadmin-sidebar('hospitals')"></div>
+
+    <!-- Main Content -->
+    <div id="content">
+        <!-- Top nav -->
+       <div th:replace="fragments/superadmin-topnav :: superadminTopnav"></div>
+        <!-- Page Content -->
+        <main class="container-fluid p-4">
+            <!-- Back Button -->
+            <a th:href="@{/superadmin/hospital-list}" class="btn btn-outline-secondary mb-4">
+                <i class="bi bi-arrow-left me-2"></i> Back to Hospitals
+            </a>
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="page-header">
+                    <h2 class="mb-0 fw-bold">
+                        <i class="bi bi-hospital-fill me-2" style="color: #667eea;"></i>
+                        <span th:text="${hospital.hospitalName}"></span> Profile
+                    </h2>
+                    <p class="text-muted mb-0">Hospital details and information</p>
+                </div>
+                <div class="badge badge-primary fs-6">
+                    <i class="bi bi-building me-1"></i>
+                    <span>Hospital ID: <span th:text="${hospital.id}"></span></span>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row g-4 mb-4">
+                <!-- Profile Images -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card hospitals">
+                        <i class="bi bi-images stats-icon"></i>
+                        <p class="stats-label mb-2">Profile Images</p>
+                        <h3 class="stats-value" th:text="${hospital.profilePictures != null ? hospital.profilePictures.size() : 0}">0</h3>
+                        <p class="stats-change positive mb-0"><i class="bi bi-image me-1"></i>Uploaded</p>
+                    </div>
+                </div>
+                <!-- Assigned Admins -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card admins">
+                        <i class="bi bi-people stats-icon"></i>
+                        <p class="stats-label mb-2">Assigned Admins</p>
+                        <h3 class="stats-value" th:text="${admins != null ? admins.size() : 0}">0</h3>
+                        <p class="stats-change positive mb-0"><i class="bi bi-person-check me-1"></i>Administrators</p>
+                    </div>
+                </div>
+                <!-- Contact Info -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card assigned">
+                        <i class="bi bi-telephone stats-icon"></i>
+                        <p class="stats-label mb-2">Contact Info</p>
+                        <h3 class="stats-value">3</h3>
+                        <p class="stats-change mb-0" style="color:#4895ef;"><i class="bi bi-info-circle me-1"></i>Available</p>
+                    </div>
+                </div>
+                <!-- Status -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card status">
+                        <i class="bi bi-activity stats-icon"></i>
+                        <p class="stats-label mb-2">Status</p>
+                        <h3 class="stats-value">Active</h3>
+                        <p class="stats-change positive mb-0"><i class="bi bi-check-circle me-1"></i>Operational</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hospital Details Row -->
+            <div class="row">
+                <!-- Profile Images Carousel -->
+                <div class="col-lg-6">
+                    <div class="form-card">
+                        <div class="form-header"><i class="bi bi-images me-2"></i>Profile Pictures</div>
+                        <div class="card-body">
+                            <div th:if="${hospital.profilePictures != null and !hospital.profilePictures.isEmpty()}">
+                                <div id="hospitalCarousel" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-inner">
+                                        <div th:each="img, iterStat : ${hospital.profilePictures}" 
+                                             th:class="${iterStat.index == 0} ? 'carousel-item active' : 'carousel-item'">
+                                            <img th:src="@{'/uploads/hospitals/' + ${img}}" class="d-block w-100 carousel-image" onerror="this.src='/images/placeholder.png'">
+                                        </div>
+                                    </div>
+                                    <button th:if="${hospital.profilePictures.size() > 1}" class="carousel-control-prev" type="button" data-bs-target="#hospitalCarousel" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button th:if="${hospital.profilePictures.size() > 1}" class="carousel-control-next" type="button" data-bs-target="#hospitalCarousel" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div th:if="${hospital.profilePictures == null or hospital.profilePictures.isEmpty()}" class="image-placeholder">
+                                <div class="text-center">
+                                    <i class="bi bi-hospital fs-1 mb-2 d-block"></i>
+                                    <p class="mb-0">No profile images available</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Table and Actions -->
+                <div class="col-lg-6">
+                    <!-- Info Table -->
+                    <div class="form-card">
+                        <div class="form-header"><i class="bi bi-info-circle me-2"></i>Hospital Information</div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr><th>Hospital Name:</th><td class="fw-semibold" th:text="${hospital.hospitalName}"></td></tr>
+                                <tr><th>Address:</th><td th:text="${hospital.address}"></td></tr>
+                                <tr><th>Phone:</th><td th:text="${hospital.phoneNo}"></td></tr>
+                                <tr><th>Email:</th><td th:text="${hospital.gmail}"></td></tr>
+                                <tr><th>Total Images:</th><td><span class="badge badge-primary" th:text="${hospital.profilePictures != null ? hospital.profilePictures.size() : 0}"></span></td></tr>
+                                <tr th:if="${admins != null and !admins.isEmpty()}">
+                                    <th>Assigned Admins:</th>
+                                    <td>
+                                        <div class="d-flex flex-wrap">
+                                            <span th:each="admin : ${admins}" class="admin-badge">
+                                                <i class="bi bi-person-fill"></i>
+                                                <span th:text="${admin.username}"></span>
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${admins == null or admins.isEmpty()}">
+                                    <th>Assigned Admins:</th>
+                                    <td>
+                                        <span class="text-muted">No admins assigned</span>
+                                        <a th:href="@{/superadmin/assign-admin}" class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="bi bi-person-plus me-1"></i>Assign Admin
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="form-card">
+                        <div class="form-header"><i class="bi bi-gear me-2"></i>Management Actions</div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2 d-md-flex">
+                                <a th:href="@{'/superadmin/edit-hospital/' + ${hospital.id}}" class="btn btn-primary flex-fill">
+                                    <i class="bi bi-pencil me-2"></i>Edit Hospital
+                                </a>
+                                <a th:href="@{/superadmin/assign-admin}" class="btn btn-outline-primary flex-fill">
+                                    <i class="bi bi-person-plus me-2"></i>Assign Admin
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Number Animation & Carousel Init -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const animateValue = (element, start, end, duration) => {
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp)/duration, 1);
+                    element.textContent = Math.floor(progress*(end-start)+start);
+                    if(progress < 1) window.requestAnimationFrame(step);
+                };
+                window.requestAnimationFrame(step);
+            };
+            document.querySelectorAll('.stats-value').forEach(el => {
+                const text = el.textContent.trim();
+                if(!isNaN(text) && text !== 'Active') {
+                    const finalValue = parseInt(text) || 0;
+                    animateValue(el, 0, finalValue, 1500);
+                }
+            });
+
+            const carousel = new bootstrap.Carousel(document.getElementById('hospitalCarousel'), { interval: 5000, wrap: true });
+        });
+    </script>
+</body>
+</html>

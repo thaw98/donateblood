@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+ <link th:href="@{/css/appointment.css}" rel="stylesheet" type="text/css"> 
+ <link th:href="@{/css/style.css}" rel="stylesheet" type="text/css"> 
+
+<head th:replace="~{headerL}"></head>
+<body>
+
+<div th:if="${successMessage}" 
+     id="alertBoxSuccess"
+     class="alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow text-center"
+     role="alert"
+     style="z-index: 1055; width: 400px;">
+  <span th:text="${successMessage}"></span>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<div th:if="${errorMessage}" 
+     id="alertBoxError"
+     class="alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow text-center"
+     role="alert"
+     style="z-index: 1055; width: 400px;">
+  <span th:text="${errorMessage}"></span>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<div class="appointment-container">
+    <div class="appointment-card">
+        <div class="appointment-header">
+            <h2><i class="fas fa-calendar-plus me-2"></i>Book Appointment</h2>
+            <p>Schedule your blood donation and save lives</p>
+        </div>
+
+        <div class="appointment-body">
+
+            <div th:if="${error}" class="alert alert-danger text-center mb-3" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <form id="appointmentForm" th:action="@{/appointment/save}" th:object="${appointObj}" method="post" novalidate>
+                <div class="form-row">
+                    <!-- Date -->
+                    <div class="form-group icon-input mb-3">
+                        <i class="fas fa-calendar-day"></i>
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" id="date" th:field="*{date}" class="form-control">
+                        <div class="invalid-feedback text-danger small"></div>
+                    </div>
+
+                    <!-- Time -->
+                    <div class="form-group icon-input mb-3">
+                        <i class="fas fa-clock"></i>
+                        <label for="time" class="form-label">Time</label>
+                        <select id="time" th:field="*{time}" class="form-select">
+                            <option value="" selected>Select Time</option>
+                        </select>
+                        <div class="invalid-feedback text-danger small"></div>
+                    </div>
+                </div>
+
+                <!-- Blood Type -->
+                <div class="form-group icon-input mb-3">
+                    <i class="fas fa-tint"></i>
+                    <label for="bloodType" class="form-label">Blood Type</label>
+<!-- Blood Type (readonly) -->
+<input id="bloodType"                   
+       type="text"
+       class="form-control"
+       th:value="${bloodTypeName}"
+       readonly>
+<input type="hidden" th:field="*{bloodTypeId}">
+
+    			<!-- Hidden field to include bloodTypeId in form submission -->
+    			<input type="hidden" th:field="*{bloodTypeId}">
+                    <div class="invalid-feedback text-danger small"></div>
+                </div>
+
+                <!-- Hospital -->
+                <div class="form-group icon-input mb-3">
+                    <i class="fas fa-hospital"></i>
+                    <label for="hospital" class="form-label">Hospital</label>
+                    <select id="hospital" th:field="*{hospitalId}" class="form-select">
+                        <option value="" selected>Select Hospital</option>
+                        <option th:each="hosp : ${hospitals}" 
+                                th:value="${hosp.id}" 
+                                th:text="${hosp.hospitalName}">
+                        </option>
+                    </select>
+                    <div class="invalid-feedback text-danger small"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-calendar-check me-2"></i>Submit Appointment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ✅ Date: today and future
+    const dateInput = document.getElementById('date');
+    const today = new Date();
+    function formatDateForInput(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const da = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${da}`;
+    }
+    dateInput.min = formatDateForInput(today);
+
+    // ⏰ Time dropdown
+    const timeDropdown = document.getElementById('time');
+    const startHour = 9;
+    const endHour = 18;
+    for (let hour = startHour; hour <= endHour; hour++) {
+        for (let min of [0, 30]) {
+            if (hour === endHour && min > 0) break;
+            let h12 = hour % 12 || 12;
+            let ampm = hour < 12 ? 'AM' : 'PM';
+            let mm = min.toString().padStart(2, '0');
+            let display = `${h12}:${mm} ${ampm}`;
+            let opt = document.createElement('option');
+            opt.value = display;
+            opt.textContent = display;
+            timeDropdown.appendChild(opt);
+        }
+    }
+
+    // ❌ Form validation
+    document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+        let valid = true;
+
+        const fields = [
+            {input: dateInput, name: "Date"},
+            {input: document.getElementById('time'), name: "Time"},
+            {input: document.getElementById('bloodType'), name: "Blood Type"},
+            {input: document.getElementById('hospital'), name: "Hospital"}
+        ];
+
+        fields.forEach(f => {
+            const errorDiv = f.input.parentElement.querySelector('.invalid-feedback');
+            if (!f.input.value) {
+                errorDiv.textContent = `${f.name} is required`;
+                errorDiv.style.display = 'block';
+                f.input.classList.add('is-invalid');
+                valid = false;
+            } else {
+                errorDiv.textContent = '';
+                errorDiv.style.display = 'none';
+                f.input.classList.remove('is-invalid');
+            }
+        });
+
+        if (!valid) {
+            e.preventDefault();
+        }
+    });
+    
+    
+    // Auto hide floating alert after 3 seconds
+    setTimeout(() => {
+      document.querySelectorAll('.alert').forEach(alert => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      });
+    }, 5000);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

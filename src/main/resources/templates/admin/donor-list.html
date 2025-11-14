@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>All Donors</title>
+  <!-- Head -->
+  <th:block th:replace="fragments/head :: head(${title})"></th:block>
+
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <link rel="stylesheet" th:href="@{/css/donor-admin.css}">
+</head>
+<body>
+  <!-- Sidebar -->
+  <div th:replace="fragments/sidebar :: sidebar(${active})"></div>
+
+  <!-- Main Content -->
+  <div id="content">
+    <!-- Top nav -->
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+<div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+  <i class="bi bi-check-circle me-2"></i>
+  <span th:text="${success}">Successfully notified</span>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+    <!-- Page content -->
+    <main class="container-fluid p-4">
+
+      <!-- Page Header -->
+      <div class="d-flex flex-row justify-content-between align-items-center">
+      	      <div class="mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-people-fill page-header-icon"></i>
+          <div>
+            <h2 class="mb-0 fw-bold" style="color: var(--primary-color);">All Donors</h2>
+            <p class="text-muted mb-0">
+              <i class="bi bi-arrow-right-short"></i>Manage and filter donor records
+            </p>
+          </div>
+        </div>
+      </div>
+                	<div class="ps-3">
+          	          	            <span id="matchCount" class="match-count"></span>
+          	
+          	</div>
+      
+      </div>
+
+
+      <!-- Filter Toolbar -->
+      <div class="filter-toolbar">
+        <div class="row align-items-end g-3">
+          <!-- Search Input -->
+          <div class="col-md-3">
+            <label class="form-label fw-bold mb-2" style="color: var(--dark-color);">
+              <i class="bi bi-search text-info"></i> Search Donor
+            </label>
+            <div class="search-input-wrapper">
+              <input id="q"
+                     type="search"
+                     class="form-control"
+                     placeholder="Search name or email…"
+                     autocomplete="off">
+            </div>
+          </div>
+
+          <!-- Blood Type Filter -->
+          <div class="col-lg-2">
+            <label class="form-label fw-bold mb-2" style="color: var(--dark-color);">
+              <i class="bi bi-droplet-fill text-danger"></i> Blood Type
+            </label>
+            <select id="btFilter" class="form-select">
+              <option value="">All Types</option>
+              <option th:each="e : ${bloodTypeMap}"
+                      th:value="${e.key}"
+                      th:text="${e.value}">
+              </option>
+            </select>
+          </div>
+          
+          <!-- Eligibility Filter -->
+<div class="col-lg-2 col-md-6">
+  <label class="form-label fw-bold mb-2" style="color: var(--dark-color);">
+    <i class="bi bi-check2-circle text-success"></i> Eligibility
+  </label>
+  <select id="eligFilter" class="form-select">
+    <option value="">All</option>
+    <option value="eligible">Over 4 months</option>
+    <option value="ineligible">Within 4 months</option>
+  </select>
+</div>
+
+
+          <!-- Clear Button -->
+          <div class="col-lg-2 col-md-6">
+            <button type="button" id="clearFilters" class="btn btn-clear w-100">
+              <i class="bi bi-x-circle me-1"></i> Clear Filters
+            </button>
+          </div>
+          
+          <div class="col-lg-3">
+          	          <!-- Match Count -->
+          <div class="d-inline-block">
+          <div class="d-flex justify-content-end align-items-center">
+          
+                    	<div>
+          		                    <!-- Page size selector -->
+<div class="d-flex align-items-center gap-2">
+  <select id="perPage" class="form-select form-select-sm" style="width:auto; min-width: 80px;">
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="20">20</option>
+    <option value="50">50</option>
+  </select>
+    <label for="perPage" class="form-label mb-0 text-muted">per page</label>
+  
+</div>
+          	</div>
+
+          	
+
+          </div>
+        </div>
+          </div>
+          
+
+
+        </div>
+        
+        
+      </div>
+
+      <!-- Table Card -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <i class="bi bi-table"></i>
+          <span>Donor Records</span>
+        </div>
+	
+        <div class="table-responsive">
+          <table id="donorTable" class="table donor-table">
+            <thead>
+              <tr>
+                <th><i class="bi bi-hash"></i>No.</th>
+                <th><i class="bi bi-person-badge"></i>Name</th>
+                <th><i class="bi bi-droplet-fill"></i>Blood Type</th>
+                <th><i class="bi bi-calendar-event"></i>Date of Birth</th>
+                <th><i class="bi bi-calendar-check"></i>Last Donation Date</th>
+                <th><i class="bi bi-envelope"></i>Email</th>
+                <th><i class="bi bi-telephone"></i>Phone</th>
+                <th><i class="bi bi-gender-ambiguous"></i>Gender</th>
+                <th><i class="bi bi-geo-alt"></i>Address</th>
+                <th><i class="bi bi-list-ol"></i>Total Donations</th>
+                <th><i class="bi bi-clock-history"></i>History</th>
+                <th><i class="bi bi-pencil-square"></i>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+<tr th:each="d, no : ${donorList}"
+    th:attr="
+      data-id=${d.id},
+      data-name=${d.username},
+      data-email=${d.email},
+      data-btid=${d.bloodTypeId},
+      data-next=${d.validOfDonation != null ? d.validOfDonation : ''},
+      data-status=${d.status != null ? d.status : ''},
+      data-total=${totalDonations[d.id] != null ? totalDonations[d.id] : 0}
+    ">
+
+                <td>
+                  <span class="row-number" th:text="${no.count}"></span>
+                </td>
+                <td>
+                  <strong th:text="${d.username}"></strong>
+                </td>
+                <td>
+                  <span class="blood-type-badge"
+                        th:text="${d.bloodTypeId != null ? bloodTypeMap[d.bloodTypeId] : 'Unknown'}"></span>
+                </td>
+                <td th:text="${d.dateOfBirth != null ? #temporals.format(d.dateOfBirth, 'dd-MM-yyyy') : ''}"></td>
+                <td th:text="${lastDonationDates[d.id] != null ? lastDonationDates[d.id] : '-'}">-</td>
+                <td>
+                  <i class="bi bi-envelope-fill text-muted me-1"></i>
+                  <span th:text="${d.email}"></span>
+                </td>
+                <td>
+                  <i class="bi bi-phone-vibrate text-muted me-1"></i>
+                  <span th:text="${d.phone}"></span>
+                </td>
+                <td>
+                  <i th:classappend="${d.gender == 'Male' ? 'bi bi-gender-male text-info' : 'bi bi-gender-female text-danger'}"
+                     class="me-1"></i>
+                  <span th:text="${d.gender}"></span>
+                </td>
+                <td th:text="${d.address}"></td>
+                <td>
+                  <span th:text="${totalDonations[d.id] != null ? totalDonations[d.id] : 0}">0</span>
+                </td>
+                <td>
+                  <a th:href="@{/admin/donors/history/{id}(id=${d.id})}" class="btn btn-sm btn-info">
+                    <i class="bi bi-clock-history"></i> View
+                  </a>
+                </td>
+                <td>
+
+                		<div class="col-12">
+                		  <button type="button"
+          class="btn btn-success btn-sm btn-notify"
+          disabled
+          th:data-id="${d.id}"
+          th:data-name="${d.username}"
+          th:data-btid="${d.bloodTypeId}"
+          th:data-next="${d.validOfDonation != null ? d.validOfDonation : ''}">
+    <i class="bi bi-bell"></i> Notify
+  </button>
+                		
+                		</div>
+                    <!-- Notify is always rendered; JS will enable it only if eligible -->
+                
+                
+                </div>
+
+
+                </td>
+              </tr>
+
+              <tr id="noRows" style="display:none;">
+                <td colspan="11" class="no-results">
+                  <i class="bi bi-inbox"></i>
+                  <div>No matching donors found</div>
+                  <small class="text-muted">Try adjusting your search filters</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (client-side) with FIRST / LAST -->
+        <nav aria-label="Donor pagination" class="d-flex justify-content-center p-3">
+          <ul id="pager" class="pagination mb-0"
+              style="
+                --bs-pagination-color: var(--secondary-color);
+                --bs-pagination-hover-color: var(--secondary-color);
+                --bs-pagination-focus-box-shadow: 0 0 0 .25rem rgba(198,40,40,.25);
+                --bs-pagination-active-bg: var(--secondary-color);
+                --bs-pagination-active-border-color: var(--secondary-color);
+              ">
+            <!-- JS injects First / Prev / pages / Next / Last -->
+          </ul>
+        </nav>
+        
+        
+        
+      </div>
+
+    </main>
+  </div>
+
+
+<!-- Notify Modal -->
+<div class="modal fade" id="notifyModal" tabindex="-1" aria-labelledby="notifyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" th:action="@{/admin/donors/notify}" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notifyModalLabel">
+			Notify to <span id="notifyDonorName" class="fw-semibold"></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- hidden fields -->
+        <input type="hidden" name="userId" id="notifyUserId">
+        <input type="hidden" name="bloodTypeId" id="notifyBloodTypeId">
+
+        <div class="row g-3">
+        	<div class="col-12">
+        		    Send a notification to the donor (no appointment will be created).
+        		
+        	</div>
+ <!-- Date -->
+<div class="col-6">
+  <label class="form-label">Date</label>
+  <input type="date" class="form-control" name="apptDate" id="notifyDate" required>
+</div>
+
+<!-- Time -->
+<div class="col-6">
+  <label class="form-label">Time</label>
+  <select class="form-select" name="apptTime" id="notifyTime" required>
+    <option value="">Select Time</option>
+  </select>
+</div>
+
+        </div>
+
+        <div class="form-text mt-2">
+          Only donors eligible (last donation over 4 months ago) can be notified.
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-bell"></i> Notify
+        </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+  <!-- JS loaded directly -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script th:src="@{/js/dashboard.js}"></script>
+
+  <script>
+  (function () {
+    const PAGE_SIZE = 5;
+
+    const $  = (s, c=document) => c.querySelector(s);
+    const $$ = (s, c=document) => Array.from(c.querySelectorAll(s));
+
+    const qInput   = $('#q');                 // search box
+    const btSelect = $('#btFilter');          // blood type dropdown
+    const stSelect = $('#statusFilter');      // status dropdown
+    const clearBtn = $('#clearFilters');      // clear button
+    const countEl  = $('#matchCount');        // "Showing X–Y of Z"
+    const noRows   = $('#noRows');            // "No matching donors" row
+    const pager    = $('#pager');
+    $$('#donorTable tbody tr').forEach(tr => {
+    	  if (tr.id === 'noRows') return;
+    	  const total = parseInt(tr.dataset.total || '0', 10);
+    	  if (total === 0) tr.remove();
+    	});
+    // all data rows in tbody (skip "noRows")
+    const allRows = $$('#donorTable tbody tr').filter(tr => tr.id !== 'noRows');
+
+    // if you later add data-status on rows, this enables the status filter
+    const hasStatusData = allRows.some(r => (r.dataset.status || '').trim().length > 0);
+
+    const normalize = s => (s || '').toString().trim().toLowerCase();
+
+    // state
+    let filteredRows = allRows.slice();
+    let currentPage  = 1;
+
+    const totalPages = () => Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+
+    function debounce(fn, ms) {
+      let t; return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
+    }
+
+    function matches(row, q, bt, st) {
+      const name  = normalize(row.dataset.name);
+      const email = normalize(row.dataset.email);
+      const okSearch = !q || (name + ' ' + email).includes(q);
+
+      const rowBtId = (row.dataset.btid || '').toString();
+      const okBt = !bt || rowBtId === bt;
+
+      const rowSt = normalize(row.dataset.status);
+      const okSt = !st || !hasStatusData || rowSt === st;
+
+      return okSearch && okBt && okSt;
+    }
+
+    function pageItem(label, enabled, targetPage, active=false, ariaLabel) {
+      const li = document.createElement('li');
+      li.className = 'page-item' + (enabled ? '' : ' disabled') + (active ? ' active' : '');
+      const a = document.createElement('a');
+      a.className = 'page-link';
+      a.href = '#';
+      a.textContent = label;
+      if (ariaLabel) a.setAttribute('aria-label', ariaLabel);
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        if (!enabled) return;
+        currentPage = targetPage;
+        render();
+      });
+      li.appendChild(a);
+      return li;
+    }
+
+    function ellipsis() {
+      const li = document.createElement('li');
+      li.className = 'page-item disabled';
+      li.innerHTML = '<span class="page-link">…</span>';
+      return li;
+    }
+
+    function buildPager() {
+      const pages = totalPages();
+      pager.innerHTML = '';
+
+      // FIRST (first page)
+      pager.appendChild(pageItem('First', currentPage > 1, 1, false, 'Go to first page'));
+
+      // Prev
+      pager.appendChild(pageItem('Prev', currentPage > 1, Math.max(1, currentPage - 1), false, 'Previous page'));
+
+      // numbers (compact window)
+      const maxButtons = 7;
+      let start = 1, end = pages;
+
+      if (pages > maxButtons) {
+        const win = 3; // around current
+        start = Math.max(1, currentPage - win);
+        end   = Math.min(pages, currentPage + win);
+
+        if (start <= 2) { start = 1; end = Math.min(pages, 1 + 2*win); }
+        if (end >= pages - 1) { end = pages; start = Math.max(1, pages - 2*win); }
+      }
+
+      if (start > 1) {
+        pager.appendChild(pageItem('1', true, 1, currentPage === 1));
+        if (start > 2) pager.appendChild(ellipsis());
+      }
+
+      for (let p = start; p <= end; p++) {
+        pager.appendChild(pageItem(String(p), true, p, currentPage === p));
+      }
+
+      if (end < pages) {
+        if (end < pages - 1) pager.appendChild(ellipsis());
+        pager.appendChild(pageItem(String(pages), true, pages, currentPage === pages));
+      }
+
+      // Next
+      pager.appendChild(pageItem('Next', currentPage < pages, Math.min(pages, currentPage + 1), false, 'Next page'));
+
+      // LAST (last page)
+      pager.appendChild(pageItem('Last', currentPage < pages, pages, false, 'Go to last page'));
+    }
+
+    function render() {
+      // hide all rows
+      allRows.forEach(r => r.style.display = 'none');
+
+      // slice for current page
+      const startIdx = (currentPage - 1) * PAGE_SIZE;
+      const endIdx   = Math.min(startIdx + PAGE_SIZE, filteredRows.length);
+      for (let i = startIdx; i < endIdx; i++) filteredRows[i].style.display = '';
+
+      // counts
+      if (countEl) {
+        const total = filteredRows.length;
+        if (!total) {
+          countEl.textContent = '';
+          countEl.style.display = 'none';
+        } else {
+          countEl.textContent = `Showing ${total ? (startIdx + 1) : 0}-${endIdx} of ${total}`;
+          countEl.style.display = 'inline-block';
+        }
+      }
+
+      // empty state
+      if (noRows) noRows.style.display = filteredRows.length === 0 ? '' : 'none';
+
+      // pager
+      buildPager();
+      pager.parentElement.style.display = totalPages() > 1 ? '' : 'none';
+    }
+
+    function applyFilters() {
+      const q  = normalize(qInput?.value);
+      const bt = btSelect?.value || '';
+      const st = normalize(stSelect?.value || '');
+
+      filteredRows = allRows.filter(tr => matches(tr, q, bt, st));
+      currentPage  = 1; // reset to first page after filtering
+      render();
+    }
+
+    const update = debounce(applyFilters, 120);
+
+    // events
+    if (qInput)   qInput.addEventListener('input', update);
+    if (btSelect) btSelect.addEventListener('change', applyFilters);
+    if (stSelect) stSelect.addEventListener('change', applyFilters);
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      if (qInput)   qInput.value = '';
+      if (btSelect) btSelect.value = '';
+      if (stSelect) stSelect.value = '';
+      applyFilters();
+      if (qInput) qInput.focus();
+    });
+
+    // initial run
+    applyFilters();
+  })();
+  
+  (function () {
+	  // --- Page size: default to 5, persist in localStorage
+	  const LS_KEY = 'donorTable.pageSize';
+	  let PAGE_SIZE = parseInt(localStorage.getItem(LS_KEY) || '5', 10);
+
+	  const $  = (s, c=document) => c.querySelector(s);
+	  const $$ = (s, c=document) => Array.from(c.querySelectorAll(s));
+
+	  const qInput   = $('#q');
+	  const btSelect = $('#btFilter');
+	  const stSelect = $('#statusFilter');
+	  const clearBtn = $('#clearFilters');
+	  const countEl  = $('#matchCount');
+	  const noRows   = $('#noRows');
+	  const pager    = $('#pager');
+	  const perPage  = $('#perPage'); // <-- new
+	  const eligSelect = $('#eligFilter');
+
+	  // If selector exists, sync its value to PAGE_SIZE
+	  if (perPage) {
+	    // If PAGE_SIZE isn't one of the options, append it once (useful if server sets a different default)
+	    if (![...perPage.options].some(o => parseInt(o.value,10) === PAGE_SIZE)) {
+	      const opt = document.createElement('option');
+	      opt.value = String(PAGE_SIZE);
+	      opt.textContent = String(PAGE_SIZE);
+	      perPage.appendChild(opt);
+	    }
+	    perPage.value = String(PAGE_SIZE);
+	  }
+
+	  // Remove rows with total=0 (keeps your existing behavior)
+	  $$('#donorTable tbody tr').forEach(tr => {
+	    if (tr.id === 'noRows') return;
+	    const total = parseInt(tr.dataset.total || '0', 10);
+	    if (total === 0) tr.remove();
+	  });
+
+	  const allRows = $$('#donorTable tbody tr').filter(tr => tr.id !== 'noRows');
+	  const hasStatusData = allRows.some(r => (r.dataset.status || '').trim().length > 0);
+	  const normalize = s => (s || '').toString().trim().toLowerCase();
+
+	  let filteredRows = allRows.slice();
+	  let currentPage  = 1;
+
+	  const totalPages = () => Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+
+	  function debounce(fn, ms) {
+	    let t; return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), ms); };
+	  }
+
+	  function matches(row, q, bt, st, elig) {
+		  const normalize = s => (s || '').toString().trim().toLowerCase();
+
+		  const name  = normalize(row.dataset.name);
+		  const email = normalize(row.dataset.email);
+		  const okSearch = !q || (name + ' ' + email).includes(q);
+
+		  const rowBtId = (row.dataset.btid || '').toString();
+		  const okBt = !bt || rowBtId === bt;
+
+		  const rowSt = normalize(row.dataset.status);
+		  const hasStatusData = (row.dataset.status || '').trim().length > 0;
+		  const okSt = !st || !hasStatusData || rowSt === st;
+
+		  // --- Eligibility check from data-next (next eligible date = lastDonation + 4 months)
+		  const nextStr = (row.dataset.next || '').trim(); // 'yyyy-MM-dd HH:mm:ss' or ''
+		  let okElig = true;
+		  if (elig) {
+		    if (!nextStr) {
+		      // No donations yet
+		      okElig = (elig === 'none') || (elig === ''); // show only in "No donations" or "All"
+		    } else {
+		      const next = new Date(nextStr.replace(' ', 'T')); // parse as local time
+		      const now  = new Date();
+		      const isEligible = next <= now;        // over 4 months since last donation
+		      okElig = (elig === 'eligible') ? isEligible
+		            : (elig === 'ineligible') ? !isEligible
+		            : true; // 'All'
+		    }
+		  }
+
+		  return okSearch && okBt && okSt && okElig;
+		}
+
+	  function pageItem(label, enabled, targetPage, active=false, ariaLabel) {
+	    const li = document.createElement('li');
+	    li.className = 'page-item' + (enabled ? '' : ' disabled') + (active ? ' active' : '');
+	    const a = document.createElement('a');
+	    a.className = 'page-link';
+	    a.href = '#';
+	    a.textContent = label;
+	    if (ariaLabel) a.setAttribute('aria-label', ariaLabel);
+	    a.addEventListener('click', function(e){
+	      e.preventDefault();
+	      if (!enabled) return;
+	      currentPage = targetPage;
+	      render();
+	    });
+	    li.appendChild(a);
+	    return li;
+	  }
+
+	  function ellipsis() {
+	    const li = document.createElement('li');
+	    li.className = 'page-item disabled';
+	    li.innerHTML = '<span class="page-link">…</span>';
+	    return li;
+	  }
+
+	  function buildPager() {
+	    const pages = totalPages();
+	    pager.innerHTML = '';
+
+	    pager.appendChild(pageItem('First', currentPage > 1, 1, false, 'Go to first page'));
+	    pager.appendChild(pageItem('Prev', currentPage > 1, Math.max(1, currentPage - 1), false, 'Previous page'));
+
+	    const maxButtons = 7;
+	    let start = 1, end = pages;
+
+	    if (pages > maxButtons) {
+	      const win = 3;
+	      start = Math.max(1, currentPage - win);
+	      end   = Math.min(pages, currentPage + win);
+
+	      if (start <= 2) { start = 1; end = Math.min(pages, 1 + 2*win); }
+	      if (end >= pages - 1) { end = pages; start = Math.max(1, pages - 2*win); }
+	    }
+
+	    if (start > 1) {
+	      pager.appendChild(pageItem('1', true, 1, currentPage === 1));
+	      if (start > 2) pager.appendChild(ellipsis());
+	    }
+
+	    for (let p = start; p <= end; p++) {
+	      pager.appendChild(pageItem(String(p), true, p, currentPage === p));
+	    }
+
+	    if (end < pages) {
+	      if (end < pages - 1) pager.appendChild(ellipsis());
+	      pager.appendChild(pageItem(String(pages), true, pages, currentPage === pages));
+	    }
+
+	    pager.appendChild(pageItem('Next', currentPage < pages, Math.min(pages, currentPage + 1), false, 'Next page'));
+	    pager.appendChild(pageItem('Last', currentPage < pages, pages, false, 'Go to last page'));
+	  }
+
+	  function render() {
+	    allRows.forEach(r => r.style.display = 'none');
+
+	    const startIdx = (currentPage - 1) * PAGE_SIZE;
+	    const endIdx   = Math.min(startIdx + PAGE_SIZE, filteredRows.length);
+	    for (let i = startIdx; i < endIdx; i++) filteredRows[i].style.display = '';
+
+	    if (countEl) {
+	      const total = filteredRows.length;
+	      if (!total) {
+	        countEl.textContent = '';
+	        countEl.style.display = 'none';
+	      } else {
+	        countEl.textContent = `Showing ${total ? (startIdx + 1) : 0}-${endIdx} of ${total}`;
+	        countEl.style.display = 'inline-block';
+	      }
+	    }
+
+	    if (noRows) noRows.style.display = filteredRows.length === 0 ? '' : 'none';
+
+	    buildPager();
+	    pager.parentElement.style.display = totalPages() > 1 ? '' : 'none';
+	  }
+
+	  function applyFilters() {
+		  const q    = normalize(qInput?.value);
+		  const bt   = btSelect?.value || '';
+		  const st   = normalize(stSelect?.value || '');
+		  const elig = eligSelect?.value || '';
+
+		  filteredRows = allRows.filter(tr => matches(tr, q, bt, st, elig));
+		  currentPage  = 1;
+		  render();
+		}
+	  const update = debounce(applyFilters, 120);
+
+	  // Events
+	  if (qInput)   qInput.addEventListener('input', update);
+	  if (btSelect) btSelect.addEventListener('change', applyFilters);
+	  if (stSelect) stSelect.addEventListener('change', applyFilters);
+	  if (clearBtn) clearBtn.addEventListener('click', () => {
+	    if (qInput)   qInput.value = '';
+	    if (btSelect) btSelect.value = '';
+	    if (stSelect) stSelect.value = '';
+	    applyFilters();
+	    if (qInput) qInput.focus();
+	  });
+
+	  // NEW: When page size changes, reset to first page, persist, and re-render
+	  if (perPage) {
+	    perPage.addEventListener('change', () => {
+	      PAGE_SIZE = parseInt(perPage.value, 10) || 5;
+	      localStorage.setItem(LS_KEY, String(PAGE_SIZE));
+	      currentPage = 1;
+	      render();
+	    });
+	  }
+	  if (eligSelect) eligSelect.addEventListener('change', applyFilters);
+	  // Initial run
+	  applyFilters();
+	})();
+  
+  (function () {
+	  const $  = (s, c=document) => c.querySelector(s);
+	  const $$ = (s, c=document) => Array.from(c.querySelectorAll(s));
+	  const rows = $$('#donorTable tbody tr').filter(tr => tr.id !== 'noRows');
+
+	  // eligible if "next eligible" <= now
+	  function isEligible(tr) {
+	    const nextStr = (tr.dataset.next || '').trim(); // 'yyyy-MM-dd HH:mm:ss'
+	    if (!nextStr) return false;                      // no donations -> treat as not eligible for this rule
+	    const next = new Date(nextStr.replace(' ', 'T'));
+	    const now  = new Date();
+	    return next <= now;
+	  }
+
+	  // Find existing Notify button in each row and enable/disable it
+	  rows.forEach(tr => {
+	    const actionCell = tr.querySelector('td:last-child');
+	    if (!actionCell) return;
+
+	    const btn = actionCell.querySelector('.btn-notify');
+	    if (!btn) return;
+
+	    const eligible = isEligible(tr);
+
+	    // toggle disabled + visual fade
+	    btn.disabled = !eligible;
+	    btn.classList.toggle('opacity-50', !eligible); // optional extra fade
+
+	    // (Re)bind click only if eligible
+	    btn.replaceWith(btn.cloneNode(true)); // remove old listeners safely
+	    const freshBtn = actionCell.querySelector('.btn-notify');
+	    if (eligible) {
+	      freshBtn.addEventListener('click', () => openNotifyModal(tr));
+	    }
+	  });
+
+	  // Modal wiring (unchanged)
+	  const nameEl  = $('#notifyDonorName');
+	  const userIdEl= $('#notifyUserId');
+	  const btIdEl  = $('#notifyBloodTypeId');
+	  const dateEl  = $('#notifyDate');
+	  const timeEl  = $('#notifyTime');
+
+	  function openNotifyModal(tr) {
+	    const donorName = tr.dataset.name || '';
+	    const userId    = tr.dataset.id;
+	    const btId      = tr.dataset.btid || '';
+
+	    // min date = today
+	    const today = new Date();
+	    const yyyy  = today.getFullYear();
+	    const mm    = String(today.getMonth()+1).padStart(2,'0');
+	    const dd    = String(today.getDate()).padStart(2,'0');
+	    const iso   = `${yyyy}-${mm}-${dd}`;
+	    dateEl.min = iso;
+	    if (!dateEl.value || dateEl.value < iso) dateEl.value = iso;
+
+	    timeEl.value = '';
+
+	    nameEl.textContent = donorName;
+	    userIdEl.value = userId;
+	    btIdEl.value = btId;
+
+	    const modal = new bootstrap.Modal(document.getElementById('notifyModal'));
+	    modal.show();
+	  }
+	})();
+  
+  (function () {
+	  // ------ helpers
+	  function pad2(n){ return String(n).padStart(2, '0'); }
+	  function formatDateForInput(d){
+	    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+	  }
+	  function toDisplay(hour24, min){
+	    const h12 = hour24 % 12 || 12;
+	    const ampm = hour24 < 12 ? 'AM' : 'PM';
+	    return `${h12}:${pad2(min)} ${ampm}`;
+	  }
+
+	  // ------ config
+	  const START_HOUR = 9;   // 09:00
+	  const END_HOUR   = 18;  // up to 18:00 inclusive
+	  const STEP_MIN   = 30;  // 30-min intervals
+
+	  // Elements (created already in your modal)
+	  const dateEl = document.getElementById('notifyDate');
+	  const timeEl = document.getElementById('notifyTime');
+
+	  // Set date min = today (once)
+	  const today = new Date();
+	  if (dateEl) {
+	    const isoToday = formatDateForInput(today);
+	    dateEl.min = isoToday;
+	    if (!dateEl.value || dateEl.value < isoToday) {
+	      dateEl.value = isoToday;
+	    }
+	  }
+
+	  function buildTimeOptions() {
+	    if (!timeEl) return;
+
+	    // clear existing (keep the placeholder)
+	    timeEl.innerHTML = '<option value="">Select Time</option>';
+
+	    for (let h = START_HOUR; h <= END_HOUR; h++) {
+	      for (let m = 0; m <= 59; m += STEP_MIN) {
+	        if (h === END_HOUR && m > 0) break; // stop at 18:00
+	        const display = toDisplay(h, m);
+	        const opt = document.createElement('option');
+	        opt.value = display;
+	        opt.textContent = display;
+	        timeEl.appendChild(opt);
+	      }
+	    }
+	  }
+
+	  // Build once on load
+	  buildTimeOptions();
+
+	  // OPTIONAL: if you want to rebuild on date change (e.g., to later add logic to hide past times on "today"):
+	  dateEl?.addEventListener('change', () => {
+	    buildTimeOptions();
+	    timeEl.value = '';
+	  });
+
+	  // Hook into your existing openNotifyModal so the field is fresh each time
+	  // (You already set date min/value in openNotifyModal; this just ensures time list resets.)
+	  const originalOpen = window.openNotifyModal;
+	  window.openNotifyModal = function(tr){
+	    originalOpen?.(tr);
+	    // ensure date min is still today
+	    const now = new Date();
+	    const iso = formatDateForInput(now);
+	    if (dateEl) {
+	      dateEl.min = iso;
+	      if (!dateEl.value || dateEl.value < iso) dateEl.value = iso;
+	    }
+	    // rebuild and clear selection
+	    buildTimeOptions();
+	    if (timeEl) timeEl.value = '';
+	  };
+	})();
+  </script>
+</html>

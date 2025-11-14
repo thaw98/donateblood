@@ -1,0 +1,38 @@
+<!-- templates/fragments/topnav.html -->
+<nav class="navbar navbar-expand-lg sticky-top" th:fragment="topnav(userName, avatarUrl)">
+  <div class="container-fluid">
+
+	<div class="d-flex align-items-center">
+	  <h2 class="m-0 text-danger fw-bold d-flex align-items-center">
+	    <i class="fas fa-hospital-alt me-2"></i>
+	    <span th:text="${(hospital != null && !#strings.isEmpty(hospital.hospitalName)) 
+	                      ? hospital.hospitalName 
+	                      : (session.HOSPITAL_NAME != null ? session.HOSPITAL_NAME : 'Select Hospital')}">
+	      Hospital Name
+	    </span>
+	  </h2>
+	</div>
+
+
+    <!-- Right-side user menu -->
+    <div class="ms-auto d-flex align-items-center">
+      <div class="dropdown">
+        <button class="btn btn-outline-danger dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+          <img
+            th:src="${avatarUrl != null ? avatarUrl
+                     : 'https://ui-avatars.com/api/?name='
+                       + #strings.replace((#strings.isEmpty(userName) ? 'Admin' : userName), ' ', '+')
+                       + '&background=random'}"
+            class="rounded-circle me-2" width="32" height="32" alt="User"/>
+          <span th:text="${#strings.isEmpty(userName) ? 'Admin' : userName}">Admin User</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" th:href="@{/admin/profile}"><i class="fas fa-user me-2"></i> Profile</a></li>
+          <li><hr class="dropdown-divider"/></li>
+          <li><a class="dropdown-item" th:href="@{/logout}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</nav>

@@ -1,0 +1,77 @@
+<div th:fragment="editBloodRequestFormFragment">
+    <div class="appointment-container" style="padding-top: 10px;">
+        <div class="appointment-card">
+            <div class="appointment-header">
+                <h2><i class="fas fa-droplet me-2"></i>Edit Blood Request</h2>
+                <p>Update your blood request details</p>
+            </div>
+            <div class="appointment-body">
+                <form id="editBloodRequestForm">
+                    <input type="hidden" th:value="${bloodRequest.id}" name="id" />
+
+                    <div class="form-group icon-input">
+                        <i class="fas fa-tint"></i>
+                        <label>Blood Type</label>
+                        <select name="bloodTypeId" class="form-select" required>
+                            <option value="" disabled>Select Blood Type</option>
+                            <option th:each="bt : ${bloodTypes}" 
+                                    th:value="${bt.id}" 
+                                    th:text="${bt.bloodType}" 
+                                    th:selected="${bt.id} == ${bloodRequest.bloodTypeId}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group icon-input">
+                        <i class="fas fa-hospital"></i>
+                        <label>Hospital</label>
+                        <select name="hospitalId" class="form-select" required>
+                            <option value="" disabled>Select Hospital</option>
+                            <option th:each="h : ${hospitals}" 
+                                    th:value="${h.id}" 
+                                    th:text="${h.hospitalName}" 
+                                    th:selected="${h.id} == ${bloodRequest.hospitalId}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group icon-input">
+                        <i class="fas fa-hashtag"></i>
+                        <label>Quantity</label>
+                        <input type="number" name="quantity" class="form-control" 
+                               th:value="${bloodRequest.quantity}" min="1" max="10" required />
+                    </div>
+
+                    <div class="form-group icon-input">
+                        <i class="fas fa-calendar-day"></i>
+                        <label>Required Date</label>
+                        <input type="date" name="requiredDate" class="form-control" 
+                               th:value="${bloodRequest.requiredDate}" required />
+                    </div>
+
+                    <div class="form-group icon-input">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <label>Urgency</label>
+                        <select name="urgency" class="form-select" required>
+                            <option value="" disabled>Select Urgency</option>
+                            <option th:each="u : ${urgencies}" 
+                                    th:value="${u}" 
+                                    th:text="${u}" 
+                                    th:selected="${u} == ${bloodRequest.urgency}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Request
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-cancel">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

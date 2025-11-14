@@ -1,0 +1,302 @@
+/* Colors & Variables */
+:root {
+    --primary-red: #dc2626;
+    --dark-red: #b91c1c;
+    --light-red: #fef2f2;
+    --text-dark: #1f2937;
+    --text-light: #6b7280;
+    --white: #ffffff;
+}
+
+/* Body */
+body {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-dark);
+    min-height: 100vh;
+    padding: 20px 0;
+    display: flex;
+    align-items: center;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Registration Card */
+.registration-container {
+    max-width: 850px;
+    width: 100%;
+    background: var(--white);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Form Header */
+.form-header {
+    background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+    color: var(--white);
+    padding: 30px;
+    text-align: center;
+}
+
+.form-header h2 {
+    margin: 0;
+    font-weight: 700;
+}
+
+.form-header p {
+    margin: 10px 0 0;
+    opacity: 0.9;
+}
+
+/* Form Body */
+.form-body {
+    padding: 30px;
+}
+
+/* Form Rows - Two columns layout */
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    flex: 2;
+}
+
+/* Labels & Inputs */
+.form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select, textarea {
+    border-radius: 8px;
+    padding: 12px 15px;
+    border: 1px solid #d1d5db;
+    transition: all 0.3s;
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus, textarea:focus {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 0.25rem rgba(220, 38, 38, 0.25);
+}
+
+/* Profile Upload */
+.profile-upload {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    border: 3px solid #e5e7eb;
+    margin: 0 auto 20px auto;
+    transition: all 0.3s;
+}
+
+.preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.camera-overlay {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 35px;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.3rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-bottom-left-radius: 50%;
+    border-bottom-right-radius: 50%;
+}
+
+.profile-upload:hover .camera-overlay {
+    opacity: 1;
+}
+
+.profile-upload:hover {
+    border-color: var(--primary-red);
+}
+
+/* Gender Options */
+.gender-options {
+    display: flex;
+    gap: 20px;
+    margin-top: 5px;
+}
+
+.gender-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gender-option input[type="radio"] {
+    accent-color: var(--primary-red);
+    transform: scale(1.2);
+}
+
+/* Password Strength */
+.strength-container {
+    margin-top: 10px;
+}
+
+.strength-bar {
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 5px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+
+.strength-fill {
+    height: 100%;
+    border-radius: 3px;
+    width: 0%;
+    transition: all 0.3s;
+}
+
+#strengthMsg {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Show Password */
+.show-password {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.show-password input {
+    margin: 0;
+    accent-color: var(--primary-red);
+}
+
+/* DOB Info */
+.dob-info {
+    color: #059669;
+    font-size: 0.9rem;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+/* Error Messages */
+.text-danger {
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: block;
+    font-weight: 500;
+}
+
+.form-label .text-danger {
+    display: inline !important;
+    margin-top: 0 !important;
+    margin-left: 2px;
+}
+
+/* Register Button */
+.btn-register {
+    background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    padding: 14px 30px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    width: 100%;
+    transition: all 0.3s;
+    margin-top: 20px;
+}
+
+.btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(220, 38, 38, 0.3);
+}
+
+/* Form Footer */
+.form-footer {
+    text-align: center;
+    padding: 20px;
+    background-color: var(--light-red);
+    color: var(--text-light);
+    border-top: 1px solid #e5e7eb;
+}
+
+.form-footer a {
+    color: var(--primary-red);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Blood Drop Animation */
+.blood-drop {
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .form-group.full-width {
+        flex: 1;
+    }
+    
+    .gender-options {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .registration-container {
+        margin: 10px;
+    }
+    
+    .form-body {
+        padding: 20px;
+    }
+    
+    .form-header {
+        padding: 20px;
+    }
+}

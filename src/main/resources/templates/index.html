@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <link th:href="@{/css/style.css}" rel="stylesheet" type="text/css"> 
+  <link th:href="@{/css/appointment.css}" rel="stylesheet" type="text/css"> 
+ 
+ <head> 
+  <style>
+.hospital-slider-wrapper {
+    position: relative;
+}
+.hospital-slider {
+    scroll-behavior: smooth;
+}
+.slider-btn {
+    background-color: rgba(0,0,0,0.3);
+    color: #fff;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 10;
+}
+.slider-btn:hover {
+    background-color: rgba(0,0,0,0.5);
+}
+@media (max-width: 992px) {
+    .hospital-card { width: 45% !important; }
+}
+@media (max-width: 576px) {
+    .hospital-card { width: 90% !important; }
+}
+</style>
+
+</head>
+
+<body>
+
+  <div th:insert="~{headerL}"></div>
+    
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <h2>Donate Blood, Save Lives</h2>
+            <p>Every drop counts. Join our community of heroes and help us ensure that no one suffers due to lack of blood.</p>
+             <a th:href="@{/appointment}" class="cta-button">Schedule Donation</a>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats">
+        <div class="container stats-container">
+            <div class="stat-item">
+    			<div class="stat-number" th:text="${livesSaved}">0</div>
+    				<div class="stat-text">Lives Saved</div>
+			</div>
+
+			<div class="stat-item">
+    			<div class="stat-number" th:text="${regularDonors}">0</div>
+    				<div class="stat-text">Regular Donors</div>
+			</div>
+
+			<div class="stat-item">
+    			<div class="stat-number" th:text="${donationCenters}">0</div>
+    				<div class="stat-text">Donation Centers</div>
+			</div>
+			<div class="stat-item"><div class="stat-number">24/7</div><div class="stat-text">Emergency Service</div></div>
+        </div>
+    </section>
+
+    <!-- Info Section -->
+    <section class="info" id="info">
+        <div class="container">
+            <div class="section-title"><h2>Why Donate Blood?</h2><p>Your blood donation can make a significant difference in someone's life. Here's why it matters:</p></div>
+            <div class="info-cards">
+                <div class="info-card"><i class="fas fa-heartbeat"></i><h3>Saves Lives</h3><p>One donation can save up to three lives.</p></div>
+                <div class="info-card"><i class="fas fa-user-md"></i><h3>Health Benefits</h3><p>Regular donation reduces risk of heart disease and maintains healthy iron levels.</p></div>
+                <div class="info-card"><i class="fas fa-users"></i><h3>Community Support</h3><p>Join a community ensuring blood supply for everyone.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Eligibility Section -->
+    <section class="eligibility" id="eligibility">
+        <div class="container">
+            <div class="section-title"><h2>Am I Eligible to Donate?</h2><p>Check if you meet the basic requirements to become a blood donor</p></div>
+            <div class="eligibility-content">
+                <div class="eligibility-image"><img src="https://images.unsplash.com/photo-1584634731339-252c581abfc5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80" alt="Blood Donation"></div>
+                <div class="eligibility-text">
+                    <h3>Basic Eligibility Criteria</h3>
+                    <ul class="eligibility-list">
+                        <li><i class="fas fa-check-circle"></i> Be in good general health and feeling well</li>
+                        <li><i class="fas fa-check-circle"></i> Be at least 17 years old</li>
+                        <li><i class="fas fa-check-circle"></i> Weigh at least 110 pounds</li>
+                        <li><i class="fas fa-check-circle"></i> Not have donated blood in the last 125 days</li>
+                        <li><i class="fas fa-check-circle"></i> Pass the physical and health history assessment</li>
+                        <li><i class="fas fa-check-circle"></i> Have valid identification with photo</li>
+                    </ul>
+                    <p>Some conditions or medications may prevent donation temporarily or permanently.</p>
+                    <a href="javascript:void(0)" class="cta-button" id="showEligibilityFormBtn" style="margin-top:20px;display:inline-block;">Check Eligibility</a>
+                    
+                    <div id="eligibilityFormContainer" style="margin-top:20px; display:none;">
+                        <form id="eligibilityForm">
+                            <div class="form-group">
+                                <label>Are you in good general health and feeling well?</label>
+                                <select id="health" class="form-control" required><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Are you at least 18 years old?</label>
+                                <select id="age" class="form-control" required><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Do you weigh at least 110 pounds?</label>
+                                <select id="weight" class="form-control" required><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Have you donated blood in the last 125 days?</label>
+                                <select id="recentDonation" class="form-control" required><option value="">Select</option><option value="no">No</option><option value="yes">Yes</option></select>
+                            </div>
+                            <button type="submit" class="cta-button" style="width:100%;margin-top:10px;">Check Eligibility</button>
+                        </form>
+                        <div id="eligibilityResult" style="margin-top:15px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+     <!-- Hospital List -->
+<section class="locations" id="locations">
+    <div class="container">
+        <div class="section-title">
+            <h2>Our Donation Locations</h2>
+            <p>Click on a hospital to view details.</p>
+        </div>
+
+        <!-- Scrollable Hospital Cards with Arrows -->
+        <div class="hospital-slider-wrapper position-relative">
+            <div class="d-flex overflow-auto gap-3 py-2 hospital-slider">
+                <!-- Hospital Cards -->
+                <div th:each="hospital : ${hospitalList}" 
+                     class="card flex-shrink-0 shadow-sm rounded hospital-card"
+                     style="width:25%;height:220px; cursor:pointer;" 
+                     th:data-bs-toggle="modal" th:data-bs-target="'#hospitalModal-' + ${hospital.id}">
+
+                    <!-- Hospital Image -->
+                    <div th:if="${hospital.profilePictures != null and !hospital.profilePictures.isEmpty()}">
+                        <img th:src="@{'/uploads/hospitals/' + ${hospital.profilePictures[0]}}" 
+                             class="card-img-top" style="height:150px; object-fit:cover; border-radius:6px;">
+                    </div>
+                    <div th:if="${hospital.profilePictures == null or hospital.profilePictures.isEmpty()}"
+                         class="d-flex align-items-center justify-content-center bg-light"
+                         style="height:150px; border-radius:6px;">
+                        <i class="bi bi-hospital fs-1 text-muted"></i>
+                    </div>
+
+                    <!-- Hospital Name -->
+                    <div class="card-body text-center">
+                        <h6 class="card-title" th:text="${hospital.hospitalName}">Hospital Name</h6>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scroll Buttons -->
+            <button class="slider-btn prev position-absolute top-50 start-0 translate-middle-y">&lt;</button>
+            <button class="slider-btn next position-absolute top-50 end-0 translate-middle-y">&gt;</button>
+        </div>
+
+        <!-- Hospital Modals -->
+      	<div th:each="hospital : ${hospitalList}">
+  			<div class="modal fade" th:id="'hospitalModal-' + ${hospital.id}" tabindex="-1" aria-hidden="true">
+    			<div class="modal-dialog modal-dialog-centered modal-lg">
+      				<div class="modal-content" style="border-radius: 12px; overflow: hidden;">
+
+        		<!-- Modal Header -->
+        		<div class="modal-header text-white" style="background-color: #b71c1c;">
+          			<div class="d-flex align-items-center">
+              			<i class="fas fa-hospital me-2 text-white" style="font-size: 3rem;"></i>
+            			<h5 class="modal-title fw-bold ms-1 text-white" th:text="${hospital.hospitalName}">Hospital Name</h5>
+          			</div>
+          			<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        		</div>
+
+        		<!-- Modal Body -->
+        		<div class="modal-body p-4">
+          			<div class="row">
+            		<!-- Image Carousel -->
+            	<div class="col-md-6 mb-3 mb-md-0">
+              		<div th:id="'carousel-' + ${hospital.id}" class="carousel slide" data-bs-ride="carousel">
+                		<div class="carousel-inner rounded shadow-sm">
+                  			<div th:each="img, iterStat : ${hospital.profilePictures}"
+                       			class="carousel-item"
+                       			th:classappend="${iterStat.index == 0} ? ' active'">
+                    			<img th:src="@{'/uploads/hospitals/' + ${img}}" class="d-block w-100"
+                         		style="height:250px; object-fit:cover; border-radius:10px;">
+                  			</div>
+                  		<div th:if="${hospital.profilePictures == null or hospital.profilePictures.isEmpty()}"
+                       		class="carousel-item active">
+                    	<div class="d-flex align-items-center justify-content-center bg-light"
+                         	style="height:250px; border-radius:10px;">
+                      		<i class="bi bi-hospital fs-1 text-muted"></i>
+                    	</div>
+                  </div>
+                </div>
+                	<button class="carousel-control-prev" type="button"
+                        th:data-bs-target="'#carousel-' + ${hospital.id}" data-bs-slide="prev">
+                  		<span class="carousel-control-prev-icon"></span>
+                	</button>
+                	<button class="carousel-control-next" type="button"
+                        th:data-bs-target="'#carousel-' + ${hospital.id}" data-bs-slide="next">
+                  		<span class="carousel-control-next-icon"></span>
+                	</button>
+              	</div>
+            </div>
+
+            <!-- Hospital Info -->
+            <div class="col-md-6 d-flex align-items-stretch">
+  				<div class="p-4 bg-white rounded-4 shadow-sm w-100 border border-light" 
+       			style="min-height: 250px; display: flex; flex-direction: column; justify-content: center;">
+
+    			<div class="mb-3">
+      				<p class="mb-1 text-secondary fw-semibold"><i class="fas fa-map-marker-alt text-danger me-2"></i>Address</p>
+      				<p class="mb-3" th:text="${hospital.address}"></p>
+    			</div>
+
+    			<div class="mb-3">
+      				<p class="mb-1 text-secondary fw-semibold"><i class="fas fa-phone-alt text-danger me-2"></i>Phone</p>
+      				<p class="mb-3" th:text="${hospital.phoneNo}"></p>
+    			</div>
+
+    			<div>
+      				<p class="mb-1 text-secondary fw-semibold"><i class="fas fa-envelope text-danger me-2"></i>Email</p>
+      				<p th:text="${hospital.gmail}"></p>
+    			</div>
+  				</div>
+			</div>
+		</div>
+	</div>
+       <!-- Modal Footer -->
+        <div class="modal-footer bg-light">
+          <button class="btn btn-outline-danger" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</section>
+
+
+ <div th:replace="~{footer}"></div>
+  
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+    	const wrapper = document.querySelector('.hospital-slider-wrapper');
+    	const slider = wrapper.querySelector('.hospital-slider');
+    	const prevBtn = wrapper.querySelector('.slider-btn.prev');
+    	const nextBtn = wrapper.querySelector('.slider-btn.next');
+    	const scrollAmount = 390; // adjust based on card width + gap
+
+    	nextBtn.addEventListener('click', () => slider.scrollBy({ left: scrollAmount, behavior: 'smooth' }));
+    	prevBtn.addEventListener('click', () => slider.scrollBy({ left: -scrollAmount, behavior: 'smooth' }));
+	});
+</script> 
+    
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="fragments/head :: head('Hospital List')"></th:block>
+    <style>
+        /* =========================
+           Dashboard Statistics Cards
+        ========================== */
+        .stats-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border-left: 6px solid #dee2e6;
+            height: 100%;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .stats-icon {
+            font-size: 3rem;
+            opacity: 0.15;
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .stats-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: #212529;
+        }
+        .stats-label {
+            font-size: 0.95rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .stats-card.primary { border-left-color: #667eea; }
+        .stats-card.admins { border-left-color: #f6ad55; }
+        .stats-card.status { border-left-color: #48bb78; }
+
+        /* Hospital Cards */
+        .hospital-card {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            border: none;
+            overflow: hidden;
+            border-left: 4px solid #e0e0e0;
+        }
+        .hospital-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Hospital Image Slider */
+        .image-slider-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+        .image-slider {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: none; /* Firefox */
+        }
+        .image-slider::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        .hospital-image-slider {
+            flex: 0 0 auto;
+            width: 100%;
+            max-width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-right: 4px;
+            transition: transform 0.3s;
+        }
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.3);
+            color: white;
+            border: none;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 1.2rem;
+        }
+        .slider-btn.prev { left: 5px; }
+        .slider-btn.next { right: 5px; }
+
+        .hospital-info { background-color: #ffffff; 
+        				padding: 1.5rem; 
+        				border-top: 1px solid #f1f1f1; 
+        				border-radius: 0 0 10px 10px; 
+        			} 
+        .hospital-meta { display: flex; 
+        				 align-items: center; 
+        				 margin-bottom: 0.5rem; 
+        				 font-size: 0.9rem; 
+        				 color: #ffffff; 
+        			} 
+        .hospital-meta i { margin-right: 0.5rem; 
+        				   width: 16px; 
+        				   text-align: center; 
+        				   color: #9e9e9e; 
+        				}
+
+        /* Search and Filter */
+        .search-filter-container {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #e0e0e0;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #212529;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover { background-color: #e9ecef; border-color: #dee2e6; transform: translateY(-2px);}
+        .btn-outline-primary {
+            border-radius: 8px;
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+            background: transparent;
+        }
+        .btn-outline-primary:hover { background-color: #6c757d !important; color: #ffffff !important; border-color: #6c757d !important; transform: translateY(-2px);}
+        .btn-info { border-radius: 6px; background-color: #6c757d !important; border-color: #6c757d !important; color: #ffffff !important;}
+        .btn-info:hover { background-color: #5a6268 !important; border-color: #5a6268 !important; transform: translateY(-2px);}
+        .btn-danger { border-radius: 6px; background-color: #dc3545 !important; border-color: #dc3545 !important; color: #ffffff !important;}
+        .btn-danger:hover { transform: translateY(-2px);}
+
+        /* Alerts */
+        .alert { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);}
+        .alert-success { background: #ffffff; border-left: 4px solid #43e97b; color: #198754;}
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 3rem 2rem; color: #6c757d; }
+        .empty-state i { font-size: 4rem; margin-bottom: 1rem; color: #dee2e6; }
+
+        /* Badges */
+        .badge { padding: 0.5rem 0.75rem; border-radius: 6px; font-weight: 600; }
+        .badge-primary { background: #d5e4db !important; color: rgb(0, 255, 0) !important; border: 1px solid #dee2e6 !important; }
+        .badge-success { background: #e9f7ef !important; color: #198754 !important; border: 1px solid #c8e6c9 !important; }
+        .badge-warning { background: #fff8e1 !important; color: #fd7e14 !important; border: 1px solid #ffe8b3 !important; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div th:replace="fragments/superadmin-sidebar :: superadmin-sidebar('hospitals')"></div>
+
+    <!-- Main Content -->
+    <div id="content">
+        <!-- Top nav -->
+        <div th:replace="fragments/superadmin-topnav :: superadminTopnav"></div>
+
+        <!-- Page content -->
+        <main class="container-fluid p-4">
+            <!-- Success Messages -->
+            <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span th:text="${param.success}">Hospital added successfully!</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="page-header">
+                    <h2 class="mb-0 fw-bold">
+                        <i class="bi bi-hospital-fill me-2" style="color: #667eea;"></i>Hospital List
+                    </h2>
+                    <p class="text-muted mb-0">Manage all registered hospitals</p>
+                </div>
+                <a th:href="@{/superadmin/add-hospital}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i> Add New Hospital
+                </a>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="stats-card primary position-relative">
+                        <i class="bi bi-hospital stats-icon"></i>
+                        <div class="stats-content">
+                            <p class="stats-label mb-2">Total Hospitals</p>
+                            <h3 class="stats-value" th:text="${hospitals.size()}">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="stats-card admins position-relative">
+                        <i class="bi bi-image stats-icon"></i>
+                        <div class="stats-content">
+                            <p class="stats-label mb-2">With Images</p>
+                            <h3 class="stats-value" th:text="${#lists.size(hospitals.?[profilePictures != null and !profilePictures.isEmpty()])}">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="stats-card status position-relative">
+                        <i class="bi bi-activity stats-icon"></i>
+                        <div class="stats-content">
+                            <p class="stats-label mb-2">Active Hospitals</p>
+                            <h3 class="stats-value" th:text="${hospitals.size()}">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="search-filter-container">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Search Hospitals</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Search by name, location..." id="searchInput">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Filter by</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Hospitals</option>
+                            <option value="with-images">With Images</option>
+                            <option value="no-images">No Images</option>
+                            <option value="with-admins">With Admins</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-primary w-100" onclick="applyFilters()">
+                            <i class="bi bi-funnel me-2"></i> Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hospitals Grid -->
+            <div class="row" id="hospitalsGrid">
+                <div th:each="hospital : ${hospitals}" class="col-md-6 col-lg-4 mb-4 hospital-item" th:attr="data-id=${hospital.id}">
+                    <div class="hospital-card">
+                        <!-- IMAGE SLIDER -->
+                        <div class="hospital-images-container mb-2">
+                            <div th:if="${hospital.profilePictures != null and !hospital.profilePictures.isEmpty()}" class="image-slider-wrapper">
+                                <div class="image-slider">
+                                    <img th:each="img : ${hospital.profilePictures}" th:src="@{'/uploads/hospitals/' + ${img}}" class="hospital-image-slider">
+                                </div>
+                                <button class="slider-btn prev">&lt;</button>
+                                <button class="slider-btn next">&gt;</button>
+                            </div>
+                            <div th:if="${hospital.profilePictures == null or hospital.profilePictures.isEmpty()}" 
+                                 class="hospital-image d-flex align-items-center justify-content-center bg-light" 
+                                 style="height:150px; border-radius: 6px; border: 1px solid #dee2e6;">
+                                <i class="bi bi-hospital fs-1 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <div class="hospital-info">
+                            <h5 class="card-title mb-2 fw-bold" th:text="${hospital.hospitalName}"></h5>
+                            <div class="hospital-meta"><i class="bi bi-geo-alt"></i><span th:text="${hospital.address}"></span></div>
+                            <div class="hospital-meta"><i class="bi bi-telephone"></i><span th:text="${hospital.phoneNo}"></span></div>
+                            <div class="hospital-meta"><i class="bi bi-envelope"></i><span th:text="${hospital.gmail}"></span></div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div class="d-flex gap-2">
+                                    <span class="badge" th:classappend="${hospital.profilePictures != null and !hospital.profilePictures.isEmpty()} ? 'badge-primary' : 'badge-warning'">
+                                        <i class="bi text-success" th:classappend="${hospital.profilePictures != null and !hospital.profilePictures.isEmpty()} ? 'bi-camera' : 'bi-camera-off'"></i>
+                                        <span th:text="${hospital.profilePictures != null ? hospital.profilePictures.size() : 0}"></span>
+                                    </span>
+                                    <span class="badge badge-success"><i class="bi bi-check-circle text-success"></i> Active</span>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <a th:href="@{'/superadmin/hospital-profile/' + ${hospital.id}}" class="btn btn-info btn-sm" data-bs-toggle="tooltip" title="View Details"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{'/superadmin/edit-hospital/' + ${hospital.id}}" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Edit Hospital"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{'/superadmin/delete-hospital/' + ${hospital.id}}" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Delete Hospital" onclick="return confirm('Are you sure you want to delete this hospital?')"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(hospitals)}" class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-hospital"></i>
+                        <h4 class="text-muted">No Hospitals Found</h4>
+                        <p class="text-muted mb-4">Get started by adding your first hospital</p>
+                        <a th:href="@{/superadmin/add-hospital}" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i> Add First Hospital</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); });
+
+            // Filters
+            function applyFilters() {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const statusFilter = document.getElementById('statusFilter').value;
+
+                document.querySelectorAll('.hospital-item').forEach(item => {
+                    const title = item.querySelector('.card-title').textContent.toLowerCase();
+                    const address = item.querySelector('.hospital-meta span').textContent.toLowerCase();
+                    const matchesSearch = title.includes(searchTerm) || address.includes(searchTerm);
+
+                    let matchesStatus = true;
+
+                    if(statusFilter === 'with-images') {
+                        const hasImage = item.querySelector('.hospital-images-container img') !== null;
+                        matchesStatus = hasImage;
+                    } else if(statusFilter === 'no-images') {
+                        const hasImage = item.querySelector('.hospital-images-container img') !== null;
+                        matchesStatus = !hasImage;
+                    } else if(statusFilter === 'with-admins') {
+                        const hasAdmin = item.querySelector('.badge-success') !== null;
+                        matchesStatus = hasAdmin;
+                    }
+
+                    item.style.display = (matchesSearch && matchesStatus) ? 'block' : 'none';
+                });
+            }
+
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+            // Image slider arrows
+            document.querySelectorAll('.image-slider-wrapper').forEach(wrapper => {
+                const slider = wrapper.querySelector('.image-slider');
+                const prevBtn = wrapper.querySelector('.slider-btn.prev');
+                const nextBtn = wrapper.querySelector('.slider-btn.next');
+
+                if(prevBtn && nextBtn && slider) {
+                    const scrollAmount = 390; // width + margin
+                    nextBtn.addEventListener('click', () => { slider.scrollBy({ left: scrollAmount, behavior: 'smooth' }); });
+                    prevBtn.addEventListener('click', () => { slider.scrollBy({ left: -scrollAmount, behavior: 'smooth' }); });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

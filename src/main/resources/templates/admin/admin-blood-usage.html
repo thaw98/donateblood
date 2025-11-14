@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Blood Usage History</title>
+  <th:block th:replace="~{fragments/head :: head(${title})}"></th:block>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" th:href="@{/css/donor-admin.css}">
+</head>
+<body>
+  <div th:replace="~{fragments/sidebar :: sidebar(${active})}"></div>
+
+  <div id="content">
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+    <main class="container-fluid p-4">
+      <div class="mb-3 d-flex align-items-center justify-content-between">
+        <h3 class="mb-0"><i class="bi bi-activity me-2"></i>Blood Usage History</h3>
+        <a th:href="@{/admin/bloodstock}" class="btn btn-danger">← Back to Blood Stock</a>
+      </div>
+
+      <!-- Filters row -->
+      <div class="row g-3 align-items-center mb-3">
+        <div class="col-auto">
+          <label for="filterApproved" class="form-label mb-0 me-2 fw-semibold">
+            <i class="bi bi-person-check me-1"></i>Approved by:
+          </label>
+          <select id="filterApproved" class="form-select form-select-sm" style="min-width:220px;">
+            <option value="">All</option>
+          </select>
+        </div>
+
+        <div class="col-auto">
+          <label for="filterBlood" class="form-label mb-0 me-2 fw-semibold">
+            <i class="bi bi-droplet-fill me-1"></i>Blood Type:
+          </label>
+          <select id="filterBlood" class="form-select form-select-sm" style="min-width:180px;">
+            <option value="">All Blood Types</option>
+          </select>
+        </div>
+
+        <!-- NEW: Date/Time order -->
+        <div class="col-auto">
+          <label for="orderDate" class="form-label mb-0 me-2 fw-semibold">
+            <i class="bi bi-calendar3 me-1"></i>Date/Time:
+          </label>
+          <select id="orderDate" class="form-select form-select-sm" style="min-width:180px;">
+            <option value="desc">Newest first</option>
+            <option value="asc">Oldest first</option>
+          </select>
+        </div>
+
+        <div class="col-auto">
+          <button id="filterClear" type="button" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-x-circle me-1"></i>Clear
+          </button>
+        </div>
+
+        <div class="col text-end">
+          <span id="showingText" class="text-muted fw-semibold" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div th:if="${session.success}" class="alert alert-success">
+        <span th:text="${session.success}">Saved.</span>
+      </div>
+
+      <div class="table-responsive">
+        <table id="usageTable" class="table donor-table">
+          <thead>
+            <tr>
+              <th><i class="bi bi-calendar3 me-1"></i>Date/Time</th>
+              <th><i class="bi bi-droplet-fill me-1"></i>Blood Type</th>
+              <th><i class="bi bi-archive-fill me-1"></i>Units Used</th>
+              <th><i class="bi bi-person-check me-1"></i>Approved by</th>
+              <th><i class="bi bi-card-text me-1"></i>Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="usageBody">
+            <tr th:each="r : ${rows}">
+              <!-- add a machine-readable ts for robust sorting -->
+              <td th:text="${#temporals.format(r.used_at, 'dd/MM/yyyy h:mma')}"
+                  th:attr="data-ts=${#temporals.format(r.used_at, 'yyyy-MM-dd''T''HH:mm:ss')}">
+                29/10/2025 3:50PM
+              </td>
+              <td th:text="${r.blood_type}">O+</td>
+              <td th:text="${r.units_used}">2</td>
+              <td th:text="${r.admin_name}">aung aung</td>
+              <td>
+                <span th:if="${r.remarks != null && !#strings.isEmpty(#strings.trim(r.remarks))}"
+                      th:text="${r.remarks}">Maung Maung, Car Accident, Urgent</span>
+                <span th:unless="${r.remarks != null && !#strings.isEmpty(#strings.trim(r.remarks))}">—</span>
+              </td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(rows)}" class="empty-row">
+              <td colspan="5" class="text-center text-muted">No usage yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bootstrap pagination bar (JS injects items) -->
+      <nav aria-label="Donor pagination" class="d-flex justify-content-center p-3">
+        <ul id="pager" class="pagination mb-0"
+            style="
+              --bs-pagination-color: var(--secondary-color);
+              --bs-pagination-hover-color: var(--secondary-color);
+              --bs-pagination-focus-box-shadow: 0 0 0 .25rem rgba(198,40,40,.25);
+              --bs-pagination-active-bg: var(--secondary-color);
+              --bs-pagination-active-border-color: var(--secondary-color);
+            ">
+        </ul>
+      </nav>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Filters + Date order + Pagination (vanilla JS) -->
+  <script>
+  (function initUsagePage(tbodyId, pagerId, pageSize, numberWindow) {
+    var tbody = document.getElementById(tbodyId);
+    var pager = document.getElementById(pagerId);
+    var showing = document.getElementById('showingText');
+    var selApproved = document.getElementById('filterApproved');
+    var selBlood = document.getElementById('filterBlood');
+    var selOrder = document.getElementById('orderDate');
+    var btnClear = document.getElementById('filterClear');
+
+    if (!tbody || !pager) return;
+
+    var allRows = Array.prototype.slice.call(tbody.querySelectorAll('tr'))
+      .filter(function (tr) { return !tr.classList.contains('empty-row'); });
+
+    if (allRows.length === 0) {
+      pager.innerHTML = '';
+      if (showing) showing.textContent = '';
+      var empty = tbody.querySelector('.empty-row');
+      if (empty) empty.style.display = '';
+      return;
+    } else {
+      var empty = tbody.querySelector('.empty-row');
+      if (empty) empty.style.display = 'none';
+    }
+
+    // Cache metadata on each row (blood, approver, timestamp)
+    allRows.forEach(function (tr) {
+      var c = tr.children;
+      var blood = (c[1] ? c[1].textContent : '').trim();
+      var approver = (c[3] ? c[3].textContent : '').trim();
+      var tsStr = (c[0] && c[0].getAttribute('data-ts')) || '';
+      var ts = tsStr ? Date.parse(tsStr) : 0; // ISO set by Thymeleaf above
+
+      tr.dataset.blood = blood;
+      tr.dataset.approver = approver;
+      tr.dataset.ts = ts || 0;
+    });
+
+    // Fill selects from unique values
+    function uniqueSorted(arr) {
+      return Array.from(new Set(arr)).sort(function(a,b){
+        return a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'});
+      });
+    }
+    function fillSelect(select, items) {
+      if (!select) return;
+      while (select.options.length > 1) select.remove(1);
+      items.forEach(function (v) {
+        var o = document.createElement('option');
+        o.value = v; o.textContent = v;
+        select.appendChild(o);
+      });
+    }
+    fillSelect(selBlood, uniqueSorted(allRows.map(tr => tr.dataset.blood).filter(Boolean)));
+    fillSelect(selApproved, uniqueSorted(allRows.map(tr => tr.dataset.approver).filter(Boolean)));
+
+    // State
+    var size = Math.max(1, pageSize || 10);
+    var windowN = Math.max(1, numberWindow || 2);
+    var page = 1;
+    var filteredRows = allRows.slice();
+
+    function applyFilterAndSort() {
+      var fBlood = selBlood ? selBlood.value.trim() : '';
+      var fApproved = selApproved ? selApproved.value.trim() : '';
+      var order = selOrder ? selOrder.value : 'desc'; // desc = newest first
+
+      // filter
+      filteredRows = allRows.filter(function (tr) {
+        var okB = !fBlood || tr.dataset.blood === fBlood;
+        var okA = !fApproved || tr.dataset.approver === fApproved;
+        return okB && okA;
+      });
+
+      // sort by timestamp
+      filteredRows.sort(function(a,b){
+        var ta = +a.dataset.ts, tb = +b.dataset.ts;
+        return (order === 'asc') ? (ta - tb) : (tb - ta);
+      });
+
+      showPage(1);
+    }
+
+    function updateShowing(total, page, size) {
+      if (!showing) return;
+      if (total === 0) { showing.textContent = 'Showing 0–0 of 0 usages'; return; }
+      var start = (page - 1) * size + 1;
+      var end = Math.min(page * size, total);
+      showing.textContent = 'Showing ' + start + '–' + end + ' of ' + total + ' usages';
+    }
+
+    function showPage(p) {
+      var total = filteredRows.length;
+      var totalPages = Math.max(1, Math.ceil(total / size));
+      page = Math.min(Math.max(1, p), totalPages);
+
+      // hide all
+      allRows.forEach(tr => tr.style.display = 'none');
+
+      if (total === 0) { renderPager(1,1); updateShowing(0,1,size); return; }
+
+      var s = (page - 1) * size;
+      var e = Math.min(s + size, total);
+      for (var i = s; i < e; i++) filteredRows[i].style.display = '';
+
+      renderPager(page, totalPages);
+      updateShowing(total, page, size);
+    }
+
+    function makeItem(label, targetPage, disabled, active) {
+      var li = document.createElement('li');
+      li.className = 'page-item';
+      if (disabled) li.classList.add('disabled');
+      if (active) li.classList.add('active');
+
+      var a = document.createElement('a');
+      a.className = 'page-link';
+      a.href = '#';
+      a.textContent = label;
+
+      if (!disabled && !active) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault(); showPage(targetPage);
+        });
+      } else {
+        a.setAttribute('tabindex','-1');
+        a.setAttribute('aria-disabled','true');
+      }
+      li.appendChild(a);
+      return li;
+    }
+
+    function renderPager(page, totalPages) {
+      pager.innerHTML = '';
+      pager.appendChild(makeItem('First', 1, page === 1, false));
+      pager.appendChild(makeItem('Prev', page - 1, page === 1, false));
+
+      var start = Math.max(1, page - windowN);
+      var end   = Math.min(totalPages, page + windowN);
+      var desired = windowN*2 + 1;
+      var visible = end - start + 1;
+      if (visible < desired) {
+        var miss = desired - visible;
+        var back = Math.min(miss, Math.max(0, start - 1));
+        start -= back; miss -= back;
+        end = Math.min(totalPages, end + miss);
+      }
+      for (var i = start; i <= end; i++) {
+        pager.appendChild(makeItem(String(i), i, false, i === page));
+      }
+
+      pager.appendChild(makeItem('Next', page + 1, page === totalPages, false));
+      pager.appendChild(makeItem('Last', totalPages, page === totalPages, false));
+    }
+
+    // Events
+    if (selBlood) selBlood.addEventListener('change', applyFilterAndSort);
+    if (selApproved) selApproved.addEventListener('change', applyFilterAndSort);
+    if (selOrder) selOrder.addEventListener('change', applyFilterAndSort);
+    if (btnClear) btnClear.addEventListener('click', function(){
+      if (selBlood) selBlood.value = '';
+      if (selApproved) selApproved.value = '';
+      if (selOrder) selOrder.value = 'desc';
+      applyFilterAndSort();
+    });
+
+    // Init
+    applyFilterAndSort();
+  })('usageBody', 'pager', 5, 2); // size=5, window=2
+  </script>
+</body>
+</html>

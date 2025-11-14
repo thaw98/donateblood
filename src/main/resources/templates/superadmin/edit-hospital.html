@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="fragments/head :: head('Edit Hospital')"></th:block>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        /* Card styling */
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #667eea;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(102, 126, 234, 0.02) 100%);
+            padding: 1.5rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-bottom: 1px solid #e9ecef;
+            color: #667eea;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        /* Form controls */
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+        
+        /* Image styling */
+        .hospital-image-preview {
+            height: 120px;
+            width: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .image-container {
+            position: relative;
+            display: inline-block;
+            margin-right: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .remove-checkbox {
+            display: none; /* Hide the actual checkbox */
+        }
+        
+        .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            text-align: center;
+            line-height: 22px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .image-container:hover .remove-btn {
+            opacity: 1;
+        }
+        
+        .remove-checkbox:checked + .remove-btn {
+            background: #28a745;
+            opacity: 1;
+        }
+        
+        .remove-checkbox:checked ~ .hospital-image-preview {
+            border: 2px solid #dc3545;
+            opacity: 0.7;
+        }
+        
+        /* Button styling */
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a6fd8;
+            border-color: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-secondary {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+        
+        /* Alert styling */
+        .alert {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.1) 0%, white 100%);
+            border-left: 4px solid #43e97b;
+            color: #198754;
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, white 100%);
+            border-left: 4px solid #dc3545;
+            color: #dc3545;
+        }
+        
+        /* Image upload section */
+        .image-upload-section {
+            border-left: 4px solid #43e97b;
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.05) 0%, transparent 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+        
+        .image-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .image-upload-label:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .image-upload-icon {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .image-upload-text {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .image-upload-hint {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="fragments/superadmin-sidebar :: superadmin-sidebar('hospitals')"></div>
+
+<div id="content">
+   <div th:replace="fragments/superadmin-topnav :: superadminTopnav"></div>
+
+    <main class="container-fluid p-4">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">
+                    <i class="bi bi-pencil-square me-2" style="color: #667eea;"></i>Edit Hospital
+                </h2>
+                <p class="text-muted mb-0">Update hospital information and images</p>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Form Card -->
+        <div class="form-card">
+            <div class="form-header">
+                <i class="bi bi-hospital me-2"></i>Hospital Information
+            </div>
+            
+            <form th:action="@{'/superadmin/update-hospital/' + ${hospital.id}}" 
+                  method="post" 
+                  enctype="multipart/form-data">
+
+                <!-- Row 1: Hospital Name & Address -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Hospital Name</label>
+                        <input type="text" class="form-control" name="hospitalName" th:value="${hospital.hospitalName}" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-control" name="address" th:value="${hospital.address}" required>
+                    </div>
+                </div>
+
+                <!-- Row 2: Phone Number & Email -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" class="form-control" name="phoneNo" th:value="${hospital.phoneNo}" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="gmail" th:value="${hospital.gmail}" required>
+                    </div>
+                </div>
+               
+
+                <!-- Existing Images Section -->
+                <div class="image-upload-section">
+                    <h6 class="fw-semibold mb-3">
+                        <i class="bi bi-images me-2"></i>Manage Hospital Images
+                    </h6>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Existing Images</label>
+                        <div class="mb-3">
+                            <div th:each="img, iterStat : ${hospital.profilePictures}" class="image-container">
+                                <input type="checkbox" name="imagesToRemove" th:value="${img}" class="remove-checkbox" th:id="'remove-' + ${iterStat.index}">
+                                <label class="remove-btn" th:for="'remove-' + ${iterStat.index}">
+                                    <i class="bi bi-x-lg"></i>
+                                </label>
+                                <img th:src="@{'/uploads/hospitals/' + ${img}}" class="hospital-image-preview">
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Click the X to mark images for removal. Upload new images to add more.
+                        </small>
+                    </div>
+
+                    <!-- Upload New Images -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Upload New Images</label>
+                        <label for="imageUpload" class="image-upload-label">
+                            <i class="bi bi-cloud-arrow-up image-upload-icon"></i>
+                            <span class="image-upload-text">Click to upload images</span>
+                            <span class="image-upload-hint">You can upload multiple images (max 5)</span>
+                        </label>
+                        <input id="imageUpload" type="file" name="profilePicturesFiles" multiple class="d-none" accept="image/*">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-end mt-4">
+                    <a th:href="@{/superadmin/hospital-list}" class="btn btn-outline-secondary me-3">
+                        <i class="bi bi-arrow-left me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Update Hospital
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Make the image upload label work
+    document.getElementById('imageUpload').addEventListener('change', function() {
+        const label = document.querySelector('.image-upload-label');
+        if (this.files.length > 0) {
+            label.innerHTML = `
+                <i class="bi bi-check-circle-fill image-upload-icon" style="color: #43e97b;"></i>
+                <span class="image-upload-text">${this.files.length} image(s) selected</span>
+                <span class="image-upload-hint">Click to change selection</span>
+            `;
+        }
+    });
+    
+    // Clicking the label triggers the file input
+    document.querySelector('.image-upload-label').addEventListener('click', function() {
+        document.getElementById('imageUpload').click();
+    });
+</script>
+</body>
+</html>

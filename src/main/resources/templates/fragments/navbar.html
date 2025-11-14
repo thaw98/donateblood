@@ -1,0 +1,54 @@
+<!-- templates/fragments/navbar.html -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- templates/fragments/navbar.html -->
+<div th:fragment="topNavbar(user)">
+    <nav class="top-navbar navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top" style="left: 250px;">
+        <div class="container-fluid">
+            <!-- Logo on top-left -->
+            <a class="navbar-brand text-danger fw-bold d-flex align-items-center" href="#">
+                <i class="fas fa-tint me-2"></i> LifeSaver
+            </a>
+
+            <!-- Toggler for mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                    aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navbar links on the right -->
+            <div class="collapse navbar-collapse justify-content-end" id="mainNavbar">
+                <ul class="navbar-nav mb-2 mb-lg-0">
+
+                    <!-- Home for Donor -->
+                    <li class="nav-item" th:if="${user.role.role.toLowerCase() == 'donor'}">
+                        <a class="nav-link text-dark fw-medium" th:href="@{/index}">Home</a>
+                    </li>
+
+                    <!-- Home for Receiver -->
+                    <li class="nav-item" th:if="${user.role.role.toLowerCase() == 'receiver'}">
+                        <a class="nav-link text-dark fw-medium" th:href="@{/indexR}">Home</a>
+                    </li>
+
+                    <!-- Locations link for Donor -->
+					<li class="nav-item" th:if="${user.role.role.toLowerCase() == 'donor'}">
+    					<a class="nav-link text-dark nav-section" th:href="@{/index#locations}">Locations</a>
+					</li>
+
+					<!-- Locations link for Receiver -->
+					<li class="nav-item" th:if="${user.role.role.toLowerCase() == 'receiver'}">
+    					<a class="nav-link text-dark nav-section" th:href="@{/indexR#locations}">Locations</a>
+					</li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+
+</body>
+</html>

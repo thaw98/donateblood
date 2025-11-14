@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Blood Donation Certificate</title>
+  <style>
+    body {
+      margin: 0; 
+      padding: 0;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      text-align: center;
+      background-color: #f9f3f3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .certificate {
+      position: relative;
+      width: 210mm;       
+      height: 297mm;      
+      box-sizing: border-box;
+      margin: 0 auto;
+      background: white;
+      border: 15px solid transparent;
+      padding: 30mm 25mm;
+      text-align: center;
+      overflow: hidden;
+      background-image: 
+        linear-gradient(white, white), 
+        linear-gradient(135deg, #8b0000 0%, #dc2626 50%, #8b0000 100%);
+      background-origin: border-box;
+      background-clip: content-box, border-box;
+      box-shadow: 0 10px 30px rgba(139, 0, 0, 0.2);
+    }
+
+    .certificate::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M50,15 C60,5 80,5 90,15 C100,25 100,45 90,55 L50,95 L10,55 C0,45 0,25 10,15 C20,5 40,5 50,15 Z" fill="none" stroke="%23ffcccc" stroke-width="1"/></svg>');
+      opacity: 0.1;
+      z-index: 0;
+    }
+
+    .icon {
+      font-size: 70px;
+      color: #dc2626; 
+      margin-bottom: 15px;
+      z-index: 1;
+      position: relative;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      font-size: 180px;
+      color: rgba(220, 38, 38, 0.08);
+      transform: translate(-50%, -50%) rotate(-15deg);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    h1 { 
+      color: #8b0000; 
+      font-size: 42px; 
+      margin-bottom: 20px; 
+      position: relative; 
+      z-index: 1;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border-bottom: 2px solid #ffcccc;
+      padding-bottom: 15px;
+    }
+
+    h2 { 
+      font-size: 32px; 
+      color: #222; 
+      margin: 20px 0 15px; 
+      position: relative; 
+      z-index: 1;
+      padding: 10px 20px;
+      background-color: #fff5f5;
+      display: inline-block;
+      border-left: 4px solid #8b0000;
+      border-right: 4px solid #8b0000;
+    }
+
+    h3 { 
+      font-size: 26px; 
+      color: #8b0000; 
+      margin: 15px 0 30px; 
+      position: relative; 
+      z-index: 1;
+      font-weight: normal;
+    }
+
+    p { 
+      font-size: 20px; 
+      color: #444; 
+      margin: 15px 0; 
+      line-height: 1.6; 
+      position: relative; 
+      z-index: 1; 
+    }
+
+    .highlight {
+      font-size: 22px;
+      color: #8b0000;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .quote {
+      font-style: italic;
+      margin: 30px 0;
+      padding: 15px;
+      border-top: 1px solid #ffcccc;
+      border-bottom: 1px solid #ffcccc;
+      color: #666;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 30mm;
+      right: 25mm;
+      text-align: right;
+      font-size: 16px;
+      color: #555;
+      z-index: 1;
+    }
+
+    .signature-area {
+      margin-bottom: 10px;
+    }
+
+
+    .organization {
+      color: #8b0000;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 5px;
+    }
+
+    /* Poe Signature Styles */
+    .poe-signature {
+      font-family: 'Brush Script MT', 'Lucida Calligraphy', cursive;
+      font-size: 32px;
+      color: #1a1a1a;
+      margin-bottom: 5px;
+      display: block;
+      transform: rotate(-2deg);
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      letter-spacing: 1px;
+    }
+
+    .download-btn {
+      display: block;
+      margin: 30px auto;
+      background-color: #8b0000;
+      color: white;
+      border: none;
+      padding: 15px 35px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(139, 0, 0, 0.2);
+      font-weight: bold;
+    }
+
+    .download-btn:hover { 
+      background-color: #a30000; 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(139, 0, 0, 0.3);
+    }
+
+    .ribbon {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 40px;
+      background: linear-gradient(90deg, #8b0000, #dc2626, #8b0000);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+      letter-spacing: 2px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+      z-index: 2;
+    }
+
+    .seal {
+      position: absolute;
+      top: 50px;
+      right: 50px;
+      width: 100px;
+      height: 100px;
+      border: 3px solid #8b0000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      z-index: 1;
+    }
+
+    .seal-content {
+      text-align: center;
+      color: #8b0000;
+      font-weight: bold;
+      font-size: 14px;
+    }
+  </style>
+
+  <!-- FontAwesome for blood icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div id="certificate" class="certificate">
+    <!-- Ribbon -->
+    <div class="ribbon">LIFE SAVER BLOOD DONATION</div>
+    
+    <!-- Seal -->
+    <div class="seal">
+      <div class="seal-content">
+        <div>OFFICIAL</div>
+        <div>SEAL</div>
+      </div>
+    </div>
+
+    <!-- Watermark -->
+    <div class="watermark"><i class="fas fa-tint"></i></div>
+
+    <!-- Top red blood drop icon -->
+    <div class="icon"><i class="fas fa-tint"></i></div>
+
+    <h1>Certificate of Blood Donation</h1>
+    <p>This certificate is proudly presented to:</p>
+    <h2 th:text="${donorName}">Donor Name</h2>
+    <p>For the selfless act of donating blood on:</p>
+    <p class="highlight" th:text="${donationDate}">YYYY-MM-DD</p>
+    <p>At:</p>
+    <h3 th:text="${hospitalName}">Hospital Name</h3>
+    
+    <p class="quote">"Your generous contribution helps save lives and brings hope to those in need."</p>
+    <p>We sincerely thank you for your life-saving donation and commitment to our community.</p>
+
+    <!-- Footer with signature -->
+    <div class="footer">
+      <div class="signature-area">
+        <!-- Poe Signature (text-based) -->
+        <div class="poe-signature">Poe</div>
+        
+        
+        <!-- Organization name -->
+        <div class="organization">LifeSaver Blood Donation</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="download-btn" onclick="downloadPDF()">Download Certificate as PDF</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const element = document.getElementById('certificate');
+
+      // Show loading state on button
+      const button = document.querySelector('.download-btn');
+      const originalText = button.innerHTML;
+      button.innerHTML = 'Generating PDF...';
+      button.disabled = true;
+
+      try {
+        const canvas = await html2canvas(element, { 
+          scale: 2, 
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const imgWidth = pageWidth;
+        const imgHeight = canvas.height * (pageWidth / canvas.width);
+
+        let finalHeight = imgHeight;
+        if (imgHeight > pageHeight) {
+          const scale = pageHeight / imgHeight;
+          finalHeight = imgHeight * scale;
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * scale, finalHeight);
+        } else {
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, finalHeight);
+        }
+
+        const donor = document.querySelector("h2").textContent || 'Certificate';
+        pdf.save(`${donor}_Blood_Donation_Certificate.pdf`);
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('There was an error generating the PDF. Please try again.');
+      } finally {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

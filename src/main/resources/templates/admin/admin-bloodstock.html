@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Blood Stock</title>
+
+  <!-- Head -->
+  <th:block th:replace="~{fragments/head :: head(${title})}"></th:block>
+
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <!-- Custom Donor Admin CSS -->
+  <link rel="stylesheet" th:href="@{/css/donor-admin.css}">
+
+  <style>
+    /* Blood stock specific styles */
+    .stock-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .units-badge {
+      background: linear-gradient(135deg, var(--success-color) 0%, #157347 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .units-low { background: linear-gradient(135deg, var(--warning-color) 0%, #d63384 100%); }
+    .units-zero { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); }
+
+    .blood-type-cell { font-size: 1.1rem; font-weight: 700; }
+
+    /* Shared typography & layout for both states */
+    .last-donation {
+      display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap;
+      font-size: 1.1rem; padding: 0.35rem 0.7rem; border-radius: 6px;
+    }
+    .last-donation-badge { background: var(--light-color); color: var(--dark-color); }
+    .last-donation-empty { background: var(--light-color); color: var(--dark-color); }
+    .last-donation .bi { font-size: 1.1em; }
+
+    .hospital-badge {
+      background: linear-gradient(135deg, var(--info-color) 0%, #3a7bc8 100%);
+      color: white; padding: 0.5rem 1.25rem; border-radius: 25px; font-weight: 700; font-size: 1rem;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--info-color) 0%, #3a7bc8 100%);
+      color: white; border-radius: 10px; padding: 1.5rem; text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card h3 { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .stat-card p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
+
+    /* table use col */
+    td.use-col .qty-input.is-invalid { border-color: #dc3545; }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div th:replace="~{fragments/sidebar :: sidebar(${active})}"></div>
+
+  <!-- Main Content -->
+  <div id="content">
+    <!-- Top nav -->
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+    <!-- Display success/error messages -->
+    <div th:if="${session.success}" id="alert-success" class="alert alert-success alert-dismissible fade show" role="alert">
+      <span th:text="${session.success}">Success message</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${session.error}" id="alert-error" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <span th:text="${session.error}">Error message</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Page content -->
+    <main class="container-fluid p-4">
+
+      <!-- Page Header -->
+      <div class="mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-droplet-fill page-header-icon"></i>
+          <div>
+            <h2 class="mb-0 fw-bold" style="color: var(--primary-color);">Blood Stock Inventory</h2>
+            <p class="text-muted mb-0">
+              <i class="bi bi-arrow-right-short"></i>Current blood bank inventory
+            </p>
+          </div>
+        </div>
+        <span class="hospital-badge">
+          <i class="bi bi-hospital-fill"></i>
+          <span th:text="${hospitalName}">Hospital Name</span>
+        </span>
+      </div>
+
+      <!-- Summary Statistics -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="stat-card">
+            <i class="bi bi-droplet-fill" style="font-size: 2rem;"></i>
+            <h3 th:text="${#lists.size(rows)}">8</h3>
+            <p>Blood Types Available</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card" style="background: linear-gradient(135deg, var(--success-color) 0%, #157347 100%);">
+            <i class="bi bi-archive-fill" style="font-size: 2rem;"></i>
+            <h3 th:text="${#aggregates.sum(rows.![units])}">0</h3>
+            <p>Total Units in Stock</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card" style="background: linear-gradient(135deg, var(--secondary-color) 0%, #b71c1c 100%);">
+            <i class="bi bi-heart-pulse-fill" style="font-size: 2rem;"></i>
+            <h3 th:text="${#lists.size(rows.?[units > 0])}">0</h3>
+            <p>Types with Stock</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blood Stock Table Card -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <i class="bi bi-clipboard-data"></i>
+          <span>Blood Type Inventory</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table donor-table">
+            <thead>
+            <tr>
+              <th><i class="bi bi-droplet-fill"></i>Blood Type</th>
+              <th><i class="bi bi-box-seam"></i>Units Available</th>
+              <th><i class="bi bi-calendar-check"></i>Last Donation Date and Time</th>
+              <th><i class="bi bi-arrow-down-circle-fill"></i>Use Blood</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+              <td>
+                <span class="blood-type-badge blood-type-cell" th:text="${r.bloodType}">A+</span>
+              </td>
+
+              <td>
+                <span th:classappend="${r.units == 0 ? 'units-badge units-zero' :
+                                       (r.units < 5 ? 'units-badge units-low' : 'units-badge')}">
+                  <i th:classappend="${r.units == 0 ? 'bi bi-exclamation-triangle-fill' :
+                                      (r.units < 5 ? 'bi bi-exclamation-circle-fill' : 'bi bi-check-circle-fill')}"></i>
+                  <span th:text="${r.units}">0</span>
+                  <span>units</span>
+                </span>
+              </td>
+
+              <td>
+                <span class="last-donation-badge" th:if="${r.lastDonation != null && r.lastDonation != '—'}">
+                  <i class="bi bi-calendar3"></i>
+                  <span th:text="${#temporals.format(
+                                    T(java.time.LocalDateTime).parse(
+                                      #strings.substring(r.lastDonation.toString(),0,19),
+                                      T(java.time.format.DateTimeFormatter).ofPattern('yyyy-MM-dd HH:mm:ss')
+                                    ),
+                                    'dd-MM-yyyy h:mma'
+                                  )}"></span>
+                </span>
+                <span class="text-muted" th:if="${r.lastDonation == null || r.lastDonation == '—'}">
+                  <i class="bi bi-dash-circle"></i> No donations yet
+                </span>
+              </td>
+
+              <!-- Use Blood (qty typed here; modal only asks remarks) -->
+              <td class="use-col">
+                <div class="d-flex align-items-center gap-2">
+                  <input type="number"
+                         class="form-control form-control-sm qty-input"
+                         style="width:70px"
+                         min="1"
+                         th:attr="max=${r.units}"
+                         placeholder="Qty" />
+
+                  <button type="button"
+                          class="btn btn-sm btn-danger btn-use-blood"
+                          th:disabled="${r.units == 0}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#useBloodModal"
+                          th:data-btid="${r.bloodTypeId}"
+                          th:data-btype="${r.bloodType}"
+                          th:data-max="${r.units}"
+                          th:data-hid="${hid}">
+                    <i class="bi bi-dash-circle"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Empty State -->
+            <tr th:if="${#lists.isEmpty(rows)}">
+              <td colspan="4" class="no-results">
+                <i class="bi bi-inbox"></i>
+                <div>No blood stock data available</div>
+                <small class="text-muted">Blood inventory will be displayed here</small>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Legend/Info Card -->
+      <div class="stock-card mt-4">
+        <h5 class="mb-3" style="color: var(--primary-color);">
+          <i class="bi bi-info-circle-fill text-info me-2"></i>Stock Level Indicators
+        </h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="units-badge" style="font-size: 0.85rem; padding: 0.3rem 0.6rem;">
+                <i class="bi bi-check-circle-fill"></i>5+
+              </span>
+              <span>Healthy Stock</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="units-badge units-low" style="font-size: 0.85rem; padding: 0.3rem 0.6rem;">
+                <i class="bi bi-exclamation-circle-fill"></i>1-4
+              </span>
+              <span>Low Stock Warning</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center gap-2">
+              <span class="units-badge units-zero" style="font-size: 0.85rem; padding: 0.3rem 0.6rem;">
+                <i class="bi bi-exclamation-triangle-fill"></i>0
+              </span>
+              <span>Out of Stock</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Use Blood Modal (only once on the page) -->
+  <div class="modal fade" id="useBloodModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form method="post" th:action="@{/admin/blood-stock/use}" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Use Blood</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- hidden payload -->
+          <input type="hidden" name="bloodTypeId" id="ub-btid">
+          <input type="hidden" name="hid"         id="ub-hid">
+          <input type="hidden" name="usedUnits"   id="ub-used">
+
+          <!-- read-only summary -->
+          <div class="mb-2">
+            <div class="small text-muted">You are about to use</div>
+            <div style="font-size:1.15rem;">
+              <strong id="ub-used-view">–</strong> unit(s) of <strong id="ub-btype">—</strong>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <div class="mb-3">
+            <label class="form-label">Remarks</label>
+            <textarea class="form-control" name="remarks" rows="3" placeholder="Why / for whom?"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Confirm &amp; Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JS: Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Page scripts -->
+  <script>
+    // Auto-hide success/error messages after 3 seconds
+    (function () {
+      const successAlert = document.getElementById('alert-success');
+      const errorAlert   = document.getElementById('alert-error');
+      if (successAlert) setTimeout(() => bootstrap.Alert.getOrCreateInstance(successAlert).close(), 3000);
+      if (errorAlert)   setTimeout(() => bootstrap.Alert.getOrCreateInstance(errorAlert).close(), 3000);
+    })();
+
+    // Open modal using qty from table; show error if invalid
+    document.addEventListener('DOMContentLoaded', function () {
+      const modalEl = document.getElementById('useBloodModal');
+      if (!modalEl) return;
+
+      modalEl.addEventListener('show.bs.modal', function (ev) {
+        const btn = ev.relatedTarget; if (!btn) return;
+
+        const cell = btn.closest('td.use-col');
+        const qtyI = cell ? cell.querySelector('.qty-input') : null;
+
+        const max  = Number(btn.getAttribute('data-max') || '0');
+        const hid  = btn.getAttribute('data-hid');
+        const btId = btn.getAttribute('data-btid');
+        const btTy = btn.getAttribute('data-btype');
+
+        let qty = qtyI ? Number(qtyI.value) : NaN;
+
+        // validate qty: integer within [1..max]
+        const valid = Number.isFinite(qty) && qty > 0 && qty % 1 === 0 && (!max || qty <= max);
+        if (!valid) {
+          ev.preventDefault(); // stop modal
+          if (qtyI) {
+            qtyI.classList.add('is-invalid');
+            qtyI.focus();
+            qtyI.setAttribute('title', max ? `Enter a whole number between 1 and ${max}.` : 'No stock available.');
+          } else {
+            alert('Please enter a valid quantity first.');
+          }
+          return;
+        }
+
+        // clear error state
+        if (qtyI) { qtyI.classList.remove('is-invalid'); qtyI.removeAttribute('title'); }
+
+        // populate modal fields
+        modalEl.querySelector('#ub-btid').value       = btId;
+        modalEl.querySelector('#ub-hid').value        = hid;
+        modalEl.querySelector('#ub-used').value       = qty;
+        modalEl.querySelector('#ub-btype').textContent = btTy;
+        modalEl.querySelector('#ub-used-view').textContent = qty;
+      });
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

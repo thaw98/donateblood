@@ -1,0 +1,241 @@
+<!-- src/main/resources/templates/admin/fulfillment.html -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Request Fulfillment</title>
+  <th:block th:replace="fragments/head :: head(${title})"></th:block>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+  <style>
+    .page-header-icon { font-size: 2rem; margin-right: .75rem; color: var(--secondary-color, #c62828); }
+    .table-card { background: #fff; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.06); overflow: hidden; }
+    .table-card-header { background: #1f2937; color: #fff; padding: 12px 16px; display:flex; align-items:center; gap:10px; }
+    .status-badge { padding: .25rem .5rem; border-radius: 999px; font-size: .8rem; }
+    .status-badge.pending { background: #fff3cd; color: #946200; }
+    .status-badge.completed { background: #d1e7dd; color: #0f5132; }
+    .sub { font-size: .85rem; color:#6b7280; }
+
+    /* Bootstrap pagination theming via CSS vars */
+    #pager{
+      --bs-pagination-color: var(--secondary-color);
+      --bs-pagination-hover-color: var(--secondary-color);
+      --bs-pagination-focus-box-shadow: 0 0 0 .25rem rgba(198,40,40,.25);
+      --bs-pagination-active-bg: var(--secondary-color);
+      --bs-pagination-active-border-color: var(--secondary-color);
+    }
+  </style>
+</head>
+<body>
+  <div th:replace="fragments/sidebar :: sidebar(${active})"></div>
+
+  <div id="content">
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+    <main class="container-fluid p-4">
+      <div class="mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-boxes page-header-icon"></i>
+          <div>
+            <h2 class="mb-0 fw-bold" style="color: var(--primary-color);">Request Fulfillment</h2>
+            <p class="text-muted mb-0">
+              <i class="bi bi-arrow-right-short"></i> Usage of donated units matched to requests
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-card-header">
+          <i class="bi bi-table"></i>
+          <span>Fulfillment Records</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-striped align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>No</th>
+                <th>Recipient</th>
+                <th>Blood Type</th>
+                <th>Quantity Used</th>
+                <th>Completed At</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Request Status</th>
+              </tr>
+            </thead>
+            <tbody id="fulfillmentBody">
+              <tr th:each="r, i : ${rows}" class="fulfillment-row">
+                <td th:text="${i.count}">1</td>
+
+                <td>
+                  <div class="fw-semibold" th:text="${r.recipientName}">Recipient</div>
+                </td>
+
+                <td><span class="badge bg-danger" th:text="${r.bloodType}">A+</span></td>
+
+                <td th:text="${r.totalUsed}">4</td>
+
+                <!-- latest fulfillment timestamp -->
+                <td th:text="${r.completedAt}">2025-10-23 10:30PM</td>
+
+                <!-- contact -->
+                <td th:text="${r.recipientEmail}">user@mail.com</td>
+                <td th:text="${r.recipientPhone} ?: '-'">-</td>
+                <td th:text="${r.recipientAddress} ?: '-'">-</td>
+
+                <td>
+                  <span class="status-badge"
+                        th:classappend="${#strings.equalsIgnoreCase(r.requestStatus,'completed') ? ' completed' : ' pending'}"
+                        th:text="${#strings.toUpperCase(r.requestStatus)}">COMPLETED</span>
+                </td>
+              </tr>
+
+              <tr th:if="${rows == null or #lists.isEmpty(rows)}" id="noResultsRow">
+                <td colspan="10" class="text-center py-5 text-muted">
+                  <i class="bi bi-inbox me-2"></i>No fulfillment records
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (client-side) with FIRST / LAST + numeric pages -->
+        <nav id="pagerNav" aria-label="Fulfillment pagination" class="d-flex justify-content-center p-3">
+          <ul id="pager" class="pagination mb-0"></ul>
+        </nav>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  (function(){
+    const PAGE_SIZE = 5; // adjust page size if you like
+
+    const tbody   = document.getElementById('fulfillmentBody');
+    if (!tbody) return;
+
+    const allRows = Array.from(tbody.querySelectorAll('.fulfillment-row'));
+    const noRow   = document.getElementById('noResultsRow');
+    const pager   = document.getElementById('pager');
+
+    let currentPage = 1;
+    const total = allRows.length;
+
+    function totalPages(){ return Math.max(1, Math.ceil(total / PAGE_SIZE)); }
+
+    function render(){
+      // Hide all rows first
+      allRows.forEach(tr => tr.style.display = 'none');
+
+      if (total === 0){
+        if (noRow) noRow.style.display = '';
+        buildPager(); // still show "Page 1 of 1"
+        return;
+      }
+      if (noRow) noRow.style.display = 'none';
+
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end   = Math.min(start + PAGE_SIZE, total);
+
+      for (let i = start; i < end; i++){
+        if (allRows[i]) allRows[i].style.display = '';
+      }
+      buildPager();
+    }
+
+    function pageItem(label, enabled, target, aria){
+      const li = document.createElement('li');
+      li.className = 'page-item' + (enabled ? '' : ' disabled');
+      const a = document.createElement('a');
+      a.className = 'page-link';
+      a.href = '#';
+      a.textContent = label;
+      if (aria) a.setAttribute('aria-label', aria);
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!enabled) return;
+        currentPage = target;
+        render();
+      });
+      li.appendChild(a);
+      return li;
+    }
+
+    function numberItem(n, active){
+      const li = document.createElement('li');
+      li.className = 'page-item' + (active ? ' active' : '');
+      const a = document.createElement('a');
+      a.className = 'page-link';
+      a.href = '#';
+      a.textContent = n;
+      if (active){
+        a.setAttribute('aria-current','page');
+      } else {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          currentPage = n;
+          render();
+        });
+      }
+      li.appendChild(a);
+      return li;
+    }
+
+    function dotsItem(){
+      const li = document.createElement('li');
+      li.className = 'page-item disabled';
+      li.innerHTML = '<span class="page-link">…</span>';
+      return li;
+    }
+
+    function buildPager(){
+      if (!pager) return;
+      pager.innerHTML = '';
+      const pages = totalPages();
+
+      // First / Prev
+      pager.appendChild(pageItem('First', currentPage > 1, 1, 'First page'));
+      pager.appendChild(pageItem('Prev',  currentPage > 1, Math.max(1, currentPage - 1), 'Previous page'));
+
+      // Numbered pages with ellipses
+      const windowSize = 1; // how many neighbors around current to show
+
+      if (pages <= 7) {
+        for (let n = 1; n <= pages; n++){
+          pager.appendChild(numberItem(n, n === currentPage));
+        }
+      } else {
+        // Always show first page
+        pager.appendChild(numberItem(1, currentPage === 1));
+
+        // Left dots
+        if (currentPage > 2 + windowSize) pager.appendChild(dotsItem());
+
+        // Middle window
+        const start = Math.max(2, currentPage - windowSize);
+        const end   = Math.min(pages - 1, currentPage + windowSize);
+        for (let n = start; n <= end; n++){
+          pager.appendChild(numberItem(n, n === currentPage));
+        }
+
+        // Right dots
+        if (currentPage < pages - 1 - windowSize) pager.appendChild(dotsItem());
+
+        // Always show last page
+        pager.appendChild(numberItem(pages, currentPage === pages));
+      }
+
+      // Next / Last
+      pager.appendChild(pageItem('Next', currentPage < pages, Math.min(pages, currentPage + 1), 'Next page'));
+      pager.appendChild(pageItem('Last', currentPage < pages, pages, 'Last page'));
+    }
+
+    render();
+  })();
+  </script>
+</body>
+</html>

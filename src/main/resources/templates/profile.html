@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeSaver - Profile</title>
+
+  <!-- Bootstrap & FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Custom CSS -->
+  <link th:href="@{/css/profile.css}" rel="stylesheet">
+  <link th:href="@{/css/appointment.css}" rel="stylesheet" type="text/css">
+  
+</head>
+
+<!-- ✅ Add role attribute for JS logic -->
+<body th:attr="data-role=${user.role.role}">
+  
+  <div class="sidebar">
+    <div>
+       
+       <!-- Profile Section -->	
+		<div class="profile">
+    	<!-- Profile Image -->
+    	<img th:if="${session.loginuser.imageBytes != null}"
+         th:src="@{/user/{id}/image(id=${session.loginuser.id})}"
+         alt="Profile Image"
+         class="profile-img"
+         id="profilePreview">
+
+    	<!-- Default image -->
+    	<img th:if="${session.loginuser.imageBytes == null}"
+         th:src="@{/images/default-avatar.jpg}"
+         alt="Default Image"
+         class="profile-img"
+         id="profilePreview">
+
+    	<!-- Edit Icon Overlay -->
+    	<label for="profileUpload" class="edit-icon"><i class="fas fa-plus"></i></label>
+    	<input type="file" id="profileUpload" name="filePart" accept="image/*" style="display:none"
+           onchange="uploadProfileImage(event)">
+
+    	<h5 th:text="${session.loginuser.username}">User</h5>
+    	<p th:text="${session.loginuser.role.role.toLowerCase() == 'donor' ? 'Blood Donor' : 'Receiver'}">Blood Donor</p>
+</div>
+
+
+      <nav>
+        <ul>
+         <!-- Donor -->
+			<li th:if="${user.role.role.toLowerCase() == 'donor'}">
+  				<a data-section="my-appointments">
+    			<i class="fas fa-calendar-alt"></i> My Appointments
+  				</a>
+			</li>
+
+		<!-- Receiver -->
+			<li th:if="${user.role.role.toLowerCase() == 'receiver'}">
+  				<a data-section="blood-request">
+    			<i class="fas fa-tint"></i> Blood Request
+  				</a>
+			</li>
+
+
+         <li th:if="${user.role.role.toLowerCase() == 'donor'}">
+         	<a data-section="donated-history">
+         		<i class="fas fa-heart"></i> Donated History
+         	</a>
+         </li>
+          <li><a data-section="messages"><i class="fas fa-envelope"></i> Messages</a></li>
+          <li><a data-section="edit-profile"><i class="fas fa-user-edit"></i> Edit Profile</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <button class="logout-btn btn btn-danger" type="button"
+        th:onclick="|if(confirm('Are you sure you want to logout?')) window.location='@{/logout}'|">
+    <i class="fas fa-sign-out-alt"></i> Logout
+</button>
+
+  </div>
+
+  <!-- Top Navbar -->
+  <div th:replace="fragments/navbar :: topNavbar(user=${user})"></div>
+
+
+  <!-- Main Content Area -->
+  <div class="content">
+    <div id="section-container">
+      <!-- Sections will be dynamically loaded here -->
+    </div>
+  </div>
+
+  <!-- JS Files -->
+  <script th:src="@{/js/profile.js}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

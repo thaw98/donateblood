@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <!-- Head -->
+  <th:block th:replace="fragments/head :: head('Super Admin Dashboard')"></th:block>
+  <style>
+    /* Dashboard Stats Cards */
+    .stats-card {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border-left: 4px solid;
+      height: 100%;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-card.hospitals {
+      border-left-color: #667eea;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, white 100%);
+    }
+
+    .stats-card.admins {
+      border-left-color: #43e97b;
+      background: linear-gradient(135deg, rgba(67, 233, 123, 0.08) 0%, white 100%);
+    }
+
+    .stats-card.assigned {
+      border-left-color: #4895ef;
+      background: linear-gradient(135deg, rgba(72, 149, 239, 0.08) 0%, white 100%);
+    }
+
+    .stats-card.users {
+      border-left-color: #8B5FBF;
+      background: linear-gradient(135deg, rgba(139, 95, 191, 0.08) 0%, white 100%);
+    }
+
+    .stats-icon {
+      font-size: 3rem;
+      opacity: 0.25;
+      position: absolute;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .stats-card.hospitals .stats-icon { color: #667eea; }
+    .stats-card.admins .stats-icon { color: #43e97b; }
+    .stats-card.assigned .stats-icon { color: #4895ef; }
+    .stats-card.users .stats-icon { color: #8B5FBF; }
+
+    .stats-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .stats-label {
+      font-size: 0.95rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .stats-change {
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .stats-change.positive { color: #198754; }
+
+    /* Tabs */
+    .nav-tabs .nav-link {
+      border: none;
+      color: #6c757d;
+      font-weight: 500;
+      padding: 0.75rem 1.5rem;
+    }
+
+    .nav-tabs .nav-link.active {
+      color: #8B5FBF;
+      border-bottom: 3px solid #8B5FBF;
+      background: transparent;
+    }
+
+    .nav-tabs .nav-link:hover {
+      color: #8B5FBF;
+      border-bottom: 3px solid #8B5FBF;
+    }
+
+    /* Pagination */
+    .pagination .page-link {
+      color: #8B5FBF;
+      border: 1px solid #dee2e6;
+    }
+
+    .pagination .page-item.active .page-link {
+      background-color: #8B5FBF;
+      border-color: #8B5FBF;
+    }
+
+    .pagination .page-link:hover {
+      color: #6d4a9f;
+    }
+
+    /* Section Header */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-header h4 {
+      color: #2c3e50;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div th:replace="fragments/superadmin-sidebar :: superadmin-sidebar('dashboard')"></div>
+
+  <!-- Main Content -->
+  <div id="content">
+    <!-- Top nav -->
+    <div th:replace="fragments/superadmin-topnav :: superadminTopnav"></div>
+
+    <!-- Page content -->
+    <main class="container-fluid p-4">
+      <!-- Header -->
+      <div class="mb-4">
+        <h2 class="mb-0 fw-bold" style="color: var(--primary-color);">
+          <i class="bi bi-speedometer2 me-2" style="color: #667eea;"></i>Super Admin Dashboard
+        </h2>
+        <p class="text-muted mb-0">System Overview & Management</p>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="row g-4">
+        <!-- Total Hospitals -->
+        <div class="col-lg-3 col-md-6">
+          <div class="stats-card hospitals position-relative">
+            <i class="bi bi-hospital stats-icon"></i>
+            <div class="stats-content">
+              <p class="stats-label mb-2">Total Hospitals</p>
+              <h3 class="stats-value" th:text="${hospitals.size()}">0</h3>
+              <p class="stats-change positive mb-0">
+                <i class="bi bi-building me-1"></i>
+                <span>Registered</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Admins -->
+        <div class="col-lg-3 col-md-6">
+          <div class="stats-card admins position-relative">
+            <i class="bi bi-people stats-icon"></i>
+            <div class="stats-content">
+              <p class="stats-label mb-2">System Admins</p>
+              <h3 class="stats-value" th:text="${admins.size()}">0</h3>
+              <p class="stats-change positive mb-0">
+                <i class="bi bi-person-badge me-1"></i>
+                <span>Administrators</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigned Admins -->
+        <div class="col-lg-3 col-md-6">
+          <div class="stats-card assigned position-relative">
+            <i class="bi bi-person-check stats-icon"></i>
+            <div class="stats-content">
+              <p class="stats-label mb-2">Assigned Admins</p>
+              <h3 class="stats-value" th:text="${#lists.size(admins.?[hospitalId != null])}">0</h3>
+              <p class="stats-change mb-0" style="color: #4895ef;">
+                <i class="bi bi-link-45deg me-1"></i>
+                <span>To Hospitals</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Total Users -->
+        <div class="col-lg-3 col-md-6">
+          <div class="stats-card users position-relative">
+            <i class="bi bi-people-fill stats-icon"></i>
+            <div class="stats-content">
+              <p class="stats-label mb-2">Total Users</p>
+              <h3 class="stats-value" th:text="${totalUsers}">0</h3>
+              <p class="stats-change mb-0" style="color: #8B5FBF;">
+                <i class="bi bi-person me-1"></i>
+                <span>All System Users</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blood Stock Section -->
+      <div class="mt-5">
+        <div class="section-header">
+          <h4 class="mb-0 fw-bold"><i class="bi bi-droplet me-2"></i>Hospital Blood Stock Overview</h4>
+        </div>
+
+        <form th:action="@{/superadmin/dashboard}" method="get" class="mb-3">
+          <label for="hospitalSelect" class="form-label fw-semibold">Select Hospital:</label>
+          <select id="hospitalSelect" name="hospitalId" class="form-select w-auto" onchange="this.form.submit()">
+            <option value="" th:selected="${selectedHospitalId == null}" disabled>-- Choose Hospital --</option>
+            <option th:each="hospital : ${hospitals}" 
+                    th:value="${hospital.id}" 
+                    th:text="${hospital.hospitalName}"
+                    th:selected="${hospital.id == selectedHospitalId}">
+            </option>
+          </select>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Blood Type</th>
+                <th>Units Available</th>
+                <th>Last Donation</th>
+              </tr>
+            </thead>
+            <tbody>
+                <th:block th:if="${selectedHospitalId != null and not #lists.isEmpty(displayStockList)}">
+                    <tr th:each="stock : ${displayStockList}">
+                        <td th:text="${stock.bloodType}">A+</td>
+                        <td th:text="${stock.amount}">0</td>
+                        <td th:text="${stock.lastDonationFmt != null ? stock.lastDonationFmt : '-'}">-</td>
+                    </tr>
+                </th:block>
+
+                <th:block th:if="${selectedHospitalId != null and #lists.isEmpty(displayStockList)}">
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">No blood stock data available for this hospital.</td>
+                    </tr>
+                </th:block>
+
+                <th:block th:if="${selectedHospitalId == null}">
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">Please select a hospital from the dropdown above to view blood stock.</td>
+                    </tr>
+                </th:block>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User Records Section with Tabs -->
+      <div class="mt-5">
+        <div class="section-header">
+          <h4 class="mb-0 fw-bold"><i class="bi bi-people-fill me-2"></i>Donor & Receiver Records</h4>
+        </div>
+
+        <!-- Tabs for Donor/Receiver -->
+        <ul class="nav nav-tabs mb-3" id="userTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="donor-tab" data-bs-toggle="tab" data-bs-target="#donor" type="button" role="tab">
+              <i class="bi bi-heart me-1"></i>Donors
+              <span class="badge bg-primary ms-1" th:text="${totalDonors}">0</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="receiver-tab" data-bs-toggle="tab" data-bs-target="#receiver" type="button" role="tab">
+              <i class="bi bi-heart-pulse me-1"></i>Receivers
+              <span class="badge bg-info ms-1" th:text="${totalReceivers}">0</span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="userTabsContent">
+          <!-- Donors Tab -->
+          <div class="tab-pane fade show active" id="donor" role="tabpanel">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>No.</th>
+                    <th>Name</th>
+                    <th>Blood Type</th>
+                    <th>Date of Birth</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Gender</th>
+                    <th>Address</th>                    
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:if="${#lists.isEmpty(donors)}">
+                    <td colspan="9" class="text-center text-muted py-4">
+                      <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                      <span>No donor records found.</span>
+                    </td>
+                  </tr>
+                  <tr th:each="user, stat : ${donors}">
+                    <td th:text="${stat.count + (currentDonorPage * 5)}">1</td>
+                    <td>
+                      <div class="user-info">
+                        <span th:text="${user.username}">John Doe</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-danger text-white" th:text="${user.bloodType}">A+</span>
+                    </td>
+                    <td th:text="${#temporals.format(user.dateofbirth, 'dd-MM-yyyy')}">13-05-2006</td>
+                    <td th:text="${user.email}">john@example.com</td>
+                    <td th:text="${user.phone}">+1234567890</td>
+                    <td th:text="${user.gender}">Male</td>
+                    <td th:text="${user.address}">123 Main St</td>                    
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Donor Pagination -->
+            <div th:if="${totalDonors > 0}" class="d-flex justify-content-between align-items-center mt-3">
+              <div class="text-muted">
+                Showing <span th:text="${currentDonorPage * 5 + 1}">1</span> to 
+                <span th:text="${(currentDonorPage * 5 + 5) > totalDonors ? totalDonors : (currentDonorPage * 5 + 5)}">5</span> of 
+                <span th:text="${totalDonors}">0</span> donors
+              </div>
+              <nav>
+                <ul class="pagination mb-0">
+                  <li class="page-item" th:classappend="${currentDonorPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/superadmin/dashboard(hospitalId=${selectedHospitalId}, donorPage=${currentDonorPage - 1}, receiverPage=${currentReceiverPage})}">Previous</a>
+                  </li>
+                  <li th:each="i : ${#numbers.sequence(0, (donorTotalPages - 1))}" 
+                      class="page-item" th:classappend="${i == currentDonorPage} ? 'active'">
+                    <a class="page-link" th:href="@{/superadmin/dashboard(hospitalId=${selectedHospitalId}, donorPage=${i}, receiverPage=${currentReceiverPage})}" 
+                       th:text="${i + 1}">1</a>
+                  </li>
+                  <li class="page-item" th:classappend="${currentDonorPage >= (donorTotalPages - 1)} ? 'disabled'">
+                    <a class="page-link" th:href="@{/superadmin/dashboard(hospitalId=${selectedHospitalId}, donorPage=${currentDonorPage + 1}, receiverPage=${currentReceiverPage})}">Next</a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+
+          <!-- Receivers Tab -->
+          <div class="tab-pane fade" id="receiver" role="tabpanel">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>No.</th>
+                    <th>Name</th>
+                    <th>Blood Type</th>
+                    <th>Date of Birth</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Gender</th>
+                    <th>Address</th>                   
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:if="${#lists.isEmpty(receivers)}">
+                    <td colspan="9" class="text-center text-muted py-4">
+                      <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                      <span>No receiver records found.</span>
+                    </td>
+                  </tr>
+                  <tr th:each="user, stat : ${receivers}">
+                    <td th:text="${stat.count + (currentReceiverPage * 5)}">1</td>
+                    <td>
+                      <div class="user-info">
+                        <span th:text="${user.username}">Jane Doe</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-danger text-white" th:text="${user.bloodType}">A+</span>
+                    </td>
+                    <td th:text="${#temporals.format(user.dateofbirth, 'dd-MM-yyyy')}">13-05-2006</td>
+                    <td th:text="${user.email}">jane@example.com</td>
+                    <td th:text="${user.phone}">+1234567890</td>
+                    <td th:text="${user.gender}">Female</td>
+                    <td th:text="${user.address}">123 Main St</td>                    
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Receiver Pagination -->
+            <div th:if="${totalReceivers > 0}" class="d-flex justify-content-between align-items-center mt-3">
+              <div class="text-muted">
+                Showing <span th:text="${currentReceiverPage * 5 + 1}">1</span> to 
+                <span th:text="${(currentReceiverPage * 5 + 5) > totalReceivers ? totalReceivers : (currentReceiverPage * 5 + 5)}">5</span> of 
+                <span th:text="${totalReceivers}">0</span> receivers
+              </div>
+              <nav>
+                <ul class="pagination mb-0">
+                  <li class="page-item" th:classappend="${currentReceiverPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/superadmin/dashboard(hospitalId=${selectedHospitalId}, donorPage=${currentDonorPage}, receiverPage=${currentReceiverPage - 1})}">Previous</a>
+                  </li>
+                  <li th:each="i : ${#numbers.sequence(0, (receiverTotalPages - 1))}" 
+                      class="page-item" th:classappend="${i == currentReceiverPage} ? 'active'">
+                    <a class="page-link" th:href="@{/superadmin/dashboard(hospitalId=${selectedHospitalId}, donorPage=${currentDonorPage}, receiverPage=${i})}" 
+                       th:text="${i + 1}">1</a>
+                  </li>
+                  <li class="page-item" th:classappend="${currentReceiverPage >= (receiverTotalPages - 1)} ? 'disabled'">
+                    <a class="page-link" th:href="@{/superadmin/dashboard(hospitalId=${selectedHospitalId}, donorPage=${currentDonorPage}, receiverPage=${currentReceiverPage + 1})}">Next</a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Number Animation -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const animateValue = (element, start, end, duration) => {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+          if (!startTimestamp) startTimestamp = timestamp;
+          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+          element.textContent = Math.floor(progress * (end - start) + start);
+          if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+      };
+
+      document.querySelectorAll('.stats-value').forEach(el => {
+        const finalValue = parseInt(el.textContent) || 0;
+        animateValue(el, 0, finalValue, 1500);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<link th:href="@{/css/appointment.css}" rel="stylesheet" type="text/css"> 
+<link th:href="@{/css/style.css}" rel="stylesheet" type="text/css"> 
+
+<head th:replace="~{headerR}"></head>
+<body>
+<div class="appointment-container">
+    <div class="appointment-card">
+        <div class="appointment-header">
+            <h2><i class="fas fa-droplet me-2"></i>Blood Request</h2>
+            <p>Request blood for patients in need</p>
+        </div>
+
+        <div class="appointment-body">
+            <form id="bloodRequestForm" th:action="@{/bloodrequest/save}" th:object="${reqObj}" method="post" novalidate>
+
+                <!-- Blood Type -->
+                <div class="form-group icon-input mb-3">
+                    <i class="fas fa-tint"></i>
+                    <label for="bloodType" class="form-label">Blood Type</label>
+                    <select th:field="*{bloodTypeId}" id="bloodType" class="form-select" required>
+                        <option value="" selected>Select Blood Type</option>
+                        <option th:each="bt : ${bloodList}" th:value="${bt.id}" th:text="${bt.bloodType}"></option>
+                    </select>
+                    <small class="text-danger" id="bloodTypeError"></small>
+                </div>
+
+                <!-- Hospital -->
+                <div class="form-group icon-input mb-3">
+                    <i class="fas fa-hospital"></i>
+                    <label for="hospital" class="form-label">Hospital</label>
+                    <select th:field="*{hospitalId}" id="hospital" class="form-select" required>
+                        <option value="" selected>Select Hospital</option>
+                        <option th:each="hosp : ${hospitalList}" th:value="${hosp.id}" th:text="${hosp.hospitalName}"></option>
+                    </select>
+                    <small class="text-danger" id="hospitalError"></small>
+                </div>
+
+                <!-- Quantity -->
+                <div class="form-group icon-input mb-3">
+                    <i class="fas fa-hashtag"></i>
+                    <label for="quantity" class="form-label">Quantity (unit)</label>
+                    <input type="number" th:field="*{quantity}" id="quantity" min="1" max="10" class="form-control" placeholder="1" required>
+                    <small class="text-danger" id="quantityError"></small>
+                </div>
+
+                <!-- Required Date -->
+                <div class="form-group icon-input mb-3">
+                    <i class="fas fa-calendar-day"></i>
+                    <label for="requiredDate" class="form-label">Required Date</label>
+                    <input type="date" th:field="*{requiredDate}" id="requiredDate" class="form-control" required>
+                    <small class="text-danger" id="dateError"></small>
+                </div>
+
+                <!-- Urgency -->
+                <div class="form-group icon-input mb-3">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <label for="urgency" class="form-label">Urgency</label>
+                    <select th:field="*{urgency}" id="urgency" class="form-select" required>
+                        <option value="" selected>Select Urgency</option>
+                        <option value="HIGH">High</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="LOW">Low</option>
+                    </select>
+                    <small class="text-danger" id="urgencyError"></small>
+                </div>
+
+                <!-- Buttons -->
+                <button type="submit" class="btn btn-primary mt-3">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Request
+                </button>                
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("bloodRequestForm");
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("requiredDate").setAttribute("min", today);
+
+    form.addEventListener("submit", function(event) {
+        let valid = true;
+
+        const bloodType = document.getElementById("bloodType");
+        const hospital = document.getElementById("hospital");
+        const quantity = document.getElementById("quantity");
+        const requiredDate = document.getElementById("requiredDate");
+        const urgency = document.getElementById("urgency");
+
+        function showError(field, errorId, condition, message) {
+            const error = document.getElementById(errorId);
+            if (!condition) {
+                error.textContent = message;
+                field.classList.add('is-invalid');
+                valid = false;
+            } else {
+                error.textContent = "";
+                field.classList.remove('is-invalid');
+            }
+        }
+
+        showError(bloodType, "bloodTypeError", bloodType.value !== "", "Blood Type is required");
+        showError(hospital, "hospitalError", hospital.value !== "", "Hospital is required");
+        showError(quantity, "quantityError", quantity.value !== "" && quantity.value >= 1 && quantity.value <= 5, "Quantity is required (1-5)");
+        showError(urgency, "urgencyError", urgency.value !== "", "Urgency is required");
+
+        // Check required date
+        const selectedDate = new Date(requiredDate.value);
+        const minDate = new Date(today);
+        showError(requiredDate, "dateError", requiredDate.value !== "" && selectedDate >= minDate, "Required Date is required and cannot be in the past");
+
+        if (!valid) event.preventDefault();
+    });
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

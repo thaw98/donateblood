@@ -1,0 +1,100 @@
+@charset "ISO-8859-1";
+
+    /* Dashboard Stats Cards */
+    .stats-card {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border-left: 4px solid;
+      height: 100%;
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stats-card.primary { border-left-color: #667eea; background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, white 100%); }
+    .stats-card.success { border-left-color: #43e97b; background: linear-gradient(135deg, rgba(67, 233, 123, 0.05) 0%, white 100%); }
+    .stats-card.warning { border-left-color: #ffc107; background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, white 100%); }
+    .stats-card.info { border-left-color: #4895ef; background: linear-gradient(135deg, rgba(72, 149, 239, 0.05) 0%, white 100%); }
+    .stats-card.danger { border-left-color: #c62828; background: linear-gradient(135deg, rgba(198, 40, 40, 0.05) 0%, white 100%); }
+    
+    .stats-icon {
+      font-size: 3rem;
+      opacity: 0.3;
+      position: absolute;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .stats-card.primary .stats-icon { color: #667eea; }
+    .stats-card.success .stats-icon { color: #43e97b; }
+    .stats-card.warning .stats-icon { color: #ffc107; }
+    .stats-card.info .stats-icon { color: #4895ef; }
+    .stats-card.danger .stats-icon { color: #c62828; }
+    
+    .stats-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .stats-label {
+      font-size: 0.95rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    
+    .stats-change {
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    
+    .stats-change.positive { color: #198754; }
+    .stats-change.urgent { color: #e91e63; }
+    
+    /* Main Layout */
+    #content {
+      background: #f8f9fa;
+      min-height: 100vh;
+    }
+    
+    .page-header-icon {
+      font-size: 2rem;
+      color: #667eea;
+    }
+    
+    .table-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.25rem;
+        border-radius: 10px 10px 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+    }

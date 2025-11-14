@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login - My Blood Donation System</title>
+
+    <!-- Stylesheets -->
+    <link th:href="@{/css/login.css}" rel="stylesheet" type="text/css">
+    <link th:href="@{/css/style.css}" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<!-- Use Public Header -->
+<div th:replace="~{header}"></div>
+<div class="login-container">
+    <div class="login-header">
+        <h2><span class="blood-drop">🩸</span> Admin Portal</h2>
+        <p>Sign in to manage your platform</p>
+    </div>
+
+    <div class="login-body">
+        <!-- Global messages -->
+        <div th:if="${error}" class="alert-message alert-danger" th:text="${error}"></div>
+        <div th:if="${success}" class="alert-message alert-success" th:text="${success}"></div>
+
+        <!-- Step 1: Enter Email -->
+        <form th:if="${showCodeInput == false and showPasswordForm == null and showSetPasswordForm == null}" 
+              th:action="@{/admin/send-code}" method="post" onsubmit="return validateEmail()">
+            <div class="mb-3">
+                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Enter your admin email"
+                       oninput="clearError('emailError')">
+                <small class="text-danger" id="emailError"></small>
+            </div>
+            <button type="submit" class="btn btn-login">Next</button>
+        </form>
+
+        <!-- Step 2: Enter OTP -->
+        <form th:if="${showCodeInput == true}" th:action="@{/admin/verify-code}" method="post" onsubmit="return validateOTP()">
+            <div class="mb-3">
+                <label for="code" class="form-label">OTP Code <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="code" name="code" placeholder="6-digit OTP"
+                       oninput="clearError('codeError')">
+                <small class="text-danger" id="codeError"></small>
+            </div>
+            <button type="submit" class="btn btn-login">Verify OTP</button>
+        </form>
+
+        <!-- Step 3: Set Password -->
+        <form th:if="${showSetPasswordForm == true}" th:action="@{/admin/set-password}" method="post" onsubmit="return validateSetPassword()">
+            <div class="mb-3" style="position: relative;">
+    			<label for="password" class="form-label">New Password <span class="text-danger">*</span></label>
+    				<input type="password" class="form-control" id="password" name="password" placeholder="Enter new password"
+           				oninput="clearError('passwordError'); checkPasswordMatch();">
+    			<button type="button" id="togglePasswordBtn" onclick="toggleSinglePassword('password', 'togglePasswordBtn')"
+            		style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border:none; background:none; cursor:pointer;">
+        			👁
+    			</button>
+    	<small class="text-danger" id="passwordError"></small>
+</div>
+
+			<div class="mb-3" style="position: relative;">
+    			<label for="confirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+    				<input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Confirm password"
+           				oninput="clearError('confirmPasswordError'); checkPasswordMatch();">
+    				<button type="button" id="toggleConfirmBtn" onclick="toggleSinglePassword('confirmPassword', 'toggleConfirmBtn')"
+            			style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border:none; background:none; cursor:pointer;">
+        				👁
+    				</button>
+    	<small id="confirmPasswordError" class="text-danger"></small>
+    	<small id="passwordMatchFeedback" class="text-success"></small>
+</div>
+
+
+            <button type="submit" class="btn btn-login">Set Password & Login</button>
+        </form>
+       
+    </div>
+</div>
+
+<script>
+
+function toggleSinglePassword(fieldId, btnId) {
+    const field = document.getElementById(fieldId);
+    const btn = document.getElementById(btnId);
+
+    if (field.type === "password") {
+        field.type = "text";
+        btn.textContent = "👁‍🗨"; // show icon
+    } else {
+        field.type = "password";
+        btn.textContent = "👁"; // hide icon
+    }
+}
+
+function checkPasswordMatch() {
+    const password = document.getElementById("password").value.trim();
+    const confirm = document.getElementById("confirmPassword").value.trim();
+    const feedback = document.getElementById("passwordMatchFeedback");
+
+    if (!confirm) {
+        feedback.textContent = '';
+        return;
+    }
+
+    if (password === confirm) {
+        feedback.textContent = "Passwords match ✅";
+        feedback.style.color = "green";
+    } else {
+        feedback.textContent = "Passwords do not match ❌";
+        feedback.style.color = "red";
+    }
+}
+
+function clearError(id) {
+    document.getElementById(id).textContent = '';
+}
+
+function showError(id, message) {
+    document.getElementById(id).textContent = message;
+    setTimeout(() => clearError(id), 5000);
+}
+
+function validateEmail() {
+    const email = document.getElementById("email").value.trim();
+    if (!email) { showError('emailError', 'Email is required'); return false; }
+    return true;
+}
+
+function validateOTP() {
+    const code = document.getElementById("code").value.trim();
+    if (!code) { showError('codeError', 'OTP is required'); return false; }
+    return true;
+}
+
+function validateSetPassword() {
+    const password = document.getElementById("password").value.trim();
+    const confirm = document.getElementById("confirmPassword").value.trim();
+    let valid = true;
+    if (!password) { showError('passwordError', 'Password is required'); valid = false; }
+    if (!confirm) { showError('confirmPasswordError', 'Confirm password is required'); valid = false; }
+    if (password && confirm && password !== confirm) { showError('confirmPasswordError', 'Passwords do not match'); valid = false; }
+    return valid;
+}
+
+function validatePassword() {
+    const password = document.getElementById("password").value.trim();
+    if (!password) { showError('passwordError', 'Password is required'); return false; }
+    return true;
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

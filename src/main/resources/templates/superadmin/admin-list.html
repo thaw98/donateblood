@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="fragments/head :: head('Admin List')"></th:block>
+    <style>
+        /* Dashboard Stats Cards (same as Admin style) */
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid;
+            height: 100%;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .stats-card.primary {
+            border-left-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, white 100%);
+        }
+
+        .stats-card.success {
+            border-left-color: #43e97b;
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.08) 0%, white 100%);
+        }
+
+        .stats-card.warning {
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, white 100%);
+        }
+
+        .stats-card.info {
+            border-left-color: #4895ef;
+            background: linear-gradient(135deg, rgba(72, 149, 239, 0.08) 0%, white 100%);
+        }
+
+        .stats-icon {
+            font-size: 3rem;
+            opacity: 0.25;
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .stats-card.primary .stats-icon { color: #667eea; }
+        .stats-card.success .stats-icon { color: #43e97b; }
+        .stats-card.warning .stats-icon { color: #ffc107; }
+        .stats-card.info .stats-icon { color: #4895ef; }
+
+        .stats-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .stats-label {
+            font-size: 0.95rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stats-change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .stats-change.positive { color: #198754; }
+
+        /* Table Card */
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(102, 126, 234, 0.02) 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            color: #667eea;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        /* Table Styling */
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            padding: 1rem;
+        }
+
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: #e9ecef;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a6fd8;
+            border-color: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f5365c, #f56036);
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #e03154, #e05531);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.35rem 0.65rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+
+        /* Header Styles */
+        .page-header h2 {
+            color: #667eea;
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+        }        
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div th:replace="fragments/superadmin-sidebar :: superadmin-sidebar('admins')"></div>
+
+    <!-- Main Content -->
+    <div id="content">
+        <!-- Top nav -->
+        <div th:replace="fragments/superadmin-topnav :: superadminTopnav"></div>
+
+        <!-- Page content -->
+        <main class="container-fluid p-4">
+            <!-- Header -->
+            <div class="mb-4">
+                <h2 class="mb-0 fw-bold">
+                    <i class="bi bi-people-fill me-2" style="color: #667eea;"></i>Admin List
+                </h2>
+                <p class="text-muted mb-0">Manage system administrators</p>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>
+                <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card primary position-relative">
+                        <i class="bi bi-people stats-icon"></i>
+                        <div class="stats-content">
+                            <p class="stats-label mb-2">Total Admins</p>
+                            <h3 class="stats-value" th:text="${#lists.size(admins)}">0</h3>
+                            <p class="stats-change mb-0" style="color: #667eea;">
+                                <i class="bi bi-shield-check me-1"></i>
+                                <span>Administrators</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card success position-relative">
+                        <i class="bi bi-person-check stats-icon"></i>
+                        <div class="stats-content">
+                            <p class="stats-label mb-2">Assigned</p>
+                            <h3 class="stats-value" th:text="${#lists.size(admins.?[hospitalId != null])}">0</h3>
+                            <p class="stats-change mb-0" style="color: #43e97b;">
+                                <i class="bi bi-link me-1"></i>
+                                <span>To Hospitals</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card warning position-relative">
+                        <i class="bi bi-person-x stats-icon"></i>
+                        <div class="stats-content">
+                            <p class="stats-label mb-2">Unassigned</p>
+                            <h3 class="stats-value" id="unassignedAdmins" th:text="${#lists.size(admins.?[hospitalId == null])}">0</h3>
+                            <p class="stats-change mb-0" style="color: #ffc107;">
+                                <i class="bi bi-clock me-1"></i>
+                                <span>Available</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIXED: Active Admins count - only count verified admins -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card info position-relative">
+                        <i class="bi bi-shield-check stats-icon"></i>
+                        <div class="stats-content">
+                            <p class="stats-label mb-2">Active</p>
+                            <h3 class="stats-value" th:text="${#lists.size(admins.?[isVerified])}">0</h3>
+                            <p class="stats-change mb-0" style="color: #4895ef;">
+                                <i class="bi bi-check-circle me-1"></i>
+                                <span>Verified Admins</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Administrator List
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th><i class="bi bi-hash me-1"></i>No</th>
+                                <th><i class="bi bi-person me-1"></i>Username</th>
+                                <th><i class="bi bi-envelope me-1"></i>Email</th>
+                                <th><i class="bi bi-hospital me-1"></i>Hospital</th>
+                                <th><i class="bi bi-check-circle me-1"></i>Status</th>
+                                <th><i class="bi bi-gear me-1"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="admin, status : ${admins}">
+                                <td><span class="fw-semibold text-primary" th:text="${status.count}"></span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-person-circle text-muted me-2"></i>
+                                        <span th:text="${admin.username}" class="fw-semibold"></span>
+                                    </div>
+                                </td>
+                                <td><span th:text="${admin.email}" class="text-muted"></span></td>
+                                <td>
+                                    <span th:if="${admin.hospitalId != null}" 
+                                          class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        <span th:text="${@hospitalRepository.findNameById(admin.hospitalId)}"></span>
+                                    </span>
+                                    <span th:if="${admin.hospitalId == null}" 
+                                          class="badge bg-warning text-dark">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Not Assigned
+                                    </span>
+                                </td>
+                                
+                                <td>
+                        			<!-- Active/Inactive Status based on is_verified -->
+                        			<span th:if="${admin.isVerified}" 
+                              			class="badge bg-success">
+                            			<i class="bi bi-check-circle me-1"></i>
+                            			Active
+                        			</span>
+                        			<span th:if="${!admin.isVerified}" 
+                              			class="badge bg-danger">
+                            			<i class="bi bi-x-circle me-1"></i>
+                            			Inactive
+                        			</span>
+                    			</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm gap-2" role="group">
+                                        <!-- Activate Button (show when inactive) -->
+                            		    <a th:if="${!admin.isVerified}"
+                               		        th:href="@{/superadmin/activate-admin/{id}(id=${admin.id})}" 
+                               		        class="btn btn-success btn-sm"
+                               		        onclick="return confirm('Are you sure you want to activate this admin?')">
+                                	    <i class="bi bi-check-circle me-1"></i> Activate
+                            		    </a>
+                            
+                            		    <!-- Deactivate Button (show when active) -->
+                            		    <a th:if="${admin.isVerified}"
+                               		        th:href="@{/superadmin/deactivate-admin/{id}(id=${admin.id})}" 
+                               		        class="btn btn-warning btn-sm"
+                               		        onclick="return confirm('Are you sure you want to deactivate this admin?')">
+                                	    <i class="bi bi-x-circle me-1"></i> Deactivate
+                            		    </a>
+
+                                        <!-- NEW: Unassign Button (show when admin has hospital assignment) -->
+                                        <a th:if="${admin.hospitalId != null}"
+                                           th:href="@{/superadmin/unassign-admin/{id}(id=${admin.id})}" 
+                                           class="btn btn-secondary btn-sm"
+                                           onclick="return confirm('Are you sure you want to unassign this admin from their hospital?')">
+                                            <i class="bi bi-link-45deg me-1"></i> Unassign
+                                        </a>
+                            		
+                                        <a th:href="@{/superadmin/delete-admin/{id}(id=${admin.id})}" 
+                                           class="btn btn-danger btn-sm" 
+                                           onclick="return confirm('Are you sure you want to delete this admin?')">
+                                            <i class="bi bi-trash me-1"></i> Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Empty State -->
+                            <tr th:if="${#lists.isEmpty(admins)}">
+                                <td colspan="6" class="text-center py-5">
+                                    <i class="bi bi-people display-4 text-muted mb-3"></i>
+                                    <div class="fw-semibold text-muted">No administrators found</div>
+                                    <small class="text-muted">Create your first admin to get started</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Number Animation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const animateValue = (element, start, end, duration) => {
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    element.textContent = Math.floor(progress * (end - start) + start);
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    }
+                };
+                window.requestAnimationFrame(step);
+            };
+
+            document.querySelectorAll('.stats-value').forEach(el => {
+                const finalValue = parseInt(el.textContent) || 0;
+                if (finalValue > 0) {
+                    animateValue(el, 0, finalValue, 1500);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

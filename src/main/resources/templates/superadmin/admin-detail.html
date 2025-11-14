@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="fragments/head :: head('Admin Detail')"></th:block>
+</head>
+<body>
+    <div th:replace="fragments/superadmin-sidebar :: superadmin-sidebar('admins')"></div>
+    <div id="content">
+        <div th:replace="fragments/superadmin-topnav :: superadminTopnav"></div>
+
+        <main class="container-fluid p-4">
+            <h2><i class="bi bi-person-lines-fill me-2"></i>Admin Details</h2>
+            <div class="card p-4 mt-3">
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Username:</div>
+                    <div class="col-md-9" th:text="${admin.username}"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Email:</div>
+                    <div class="col-md-9" th:text="${admin.email}"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Hospital:</div>
+                    <div class="col-md-9">
+                        <span th:if="${admin.hospitalId != null}" th:text="${@hospitalRepository.findNameById(admin.hospitalId)}"></span>
+                        <span th:if="${admin.hospitalId == null}">Not Assigned</span>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Status:</div>
+                    <div class="col-md-9">
+                        <span th:if="${admin.isVerified}">Active</span>
+                        <span th:if="${!admin.isVerified}">Inactive</span>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Gender:</div>
+                    <div class="col-md-9" th:text="${admin.gender}"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Date of Birth:</div>
+                    <div class="col-md-9" th:text="${admin.dateofbirth}"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Phone:</div>
+                    <div class="col-md-9" th:text="${admin.phone}"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Address:</div>
+                    <div class="col-md-9" th:text="${admin.address}"></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3 fw-bold">Blood Type ID:</div>
+                    <div class="col-md-9" th:text="${admin.bloodTypeId}"></div>
+                </div>
+            </div>
+
+            <a th:href="@{/superadmin/admin-list}" class="btn btn-secondary mt-3">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

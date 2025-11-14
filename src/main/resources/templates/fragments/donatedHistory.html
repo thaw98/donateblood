@@ -1,0 +1,55 @@
+<div th:fragment="donatedHistory">
+  <div class="appointments-container">
+    <!-- Header -->
+    <div class="appointments-header">
+      <div class="header-left">
+        <i class="fas fa-tint blood-icon"></i>
+        <div>
+          <h2>Donated History</h2>
+          <p>Track your blood donations and history</p>
+        </div>
+      </div>
+      <div class="header-right" th:if="${!donations.isEmpty()}">
+        <span>Total Donations: <strong th:text="${donations.size()}">0</strong></span>
+      </div>
+    </div>
+
+    <!-- No donation message -->
+    <div th:if="${donations.isEmpty()}" class="appointment-body text-center py-4">
+      <p>No donation activity yet.</p>
+    </div>
+
+    <!-- Donations Table -->
+    <div th:if="${!donations.isEmpty()}" class="appointments-table-wrapper">
+      <table class="appointments-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Donation Date</th>
+            <th>Units</th>
+            <th>Appointment Date</th>
+            <th>Hospital</th>
+            <th>Blood Type</th>
+            <th>Certificate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="d, iterStat : ${donations}">
+            <td th:text="${iterStat.count}"></td>
+            <td th:text="${d.donationDate}"></td>
+            <td th:text="${d.bloodUnit}"></td>
+            <td th:text="${d.appointmentDate}"></td>
+            <td th:text="${d.hospitalName}"></td>
+            <td><span class="blood-badge" th:text="${d.bloodTypeName}"></span></td>
+            <td>
+			  <a th:href="@{/profile/certificate/{id}(id=${d.donationId})}" 
+			     class="btn btn-sm btn-outline-danger" target="_blank">
+			    <i class="fas fa-eye"></i> View
+			  </a>
+			</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

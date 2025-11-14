@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="fragments/head :: head('Add Hospital')"></th:block>
+    <style>
+        /* Dashboard Stats Cards (same as Admin style) */
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid;
+            height: 100%;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .stats-card.hospitals {
+            border-left-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, white 100%);
+        }
+
+        .stats-card.admins {
+            border-left-color: #43e97b;
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.08) 0%, white 100%);
+        }
+
+        .stats-card.assigned {
+            border-left-color: #4895ef;
+            background: linear-gradient(135deg, rgba(72, 149, 239, 0.08) 0%, white 100%);
+        }
+
+        .stats-card.status {
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, white 100%);
+        }
+
+        .stats-card.primary {
+            border-left-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, white 100%);
+        }
+
+        .stats-icon {
+            font-size: 3rem;
+            opacity: 0.25;
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .stats-card.hospitals .stats-icon { color: #667eea; }
+        .stats-card.admins .stats-icon { color: #43e97b; }
+        .stats-card.assigned .stats-icon { color: #4895ef; }
+        .stats-card.status .stats-icon { color: #ffc107; }
+        .stats-card.primary .stats-icon { color: #667eea; }
+
+        .stats-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .stats-label {
+            font-size: 0.95rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stats-change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .stats-change.positive { color: #198754; }
+
+        /* Quick Actions */
+        .quick-actions .btn {
+            border-radius: 8px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .quick-actions .btn:hover {
+            transform: translateY(-3px);
+        }
+
+        /* Form Card */
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .form-card h5 {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a6fd8;
+            border-color: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-secondary {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-outline-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Image Preview */
+        .image-preview-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+        .image-preview:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+        }
+
+        /* Alert Styles */
+        .alert {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.1) 0%, white 100%);
+            border-left: 4px solid #43e97b;
+            color: #198754;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, white 100%);
+            border-left: 4px solid #dc3545;
+            color: #dc3545;
+        }
+
+        /* Header Styles */
+        .page-header h2 {
+            color: #667eea;
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div th:replace="fragments/superadmin-sidebar :: superadmin-sidebar('add-hospital')"></div>
+
+    <!-- Main Content -->
+    <div id="content">
+        <!-- Top nav -->
+        <div th:replace="fragments/superadmin-topnav :: superadminTopnav"></div>
+
+        <!-- Page content -->
+        <main class="container-fluid p-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="page-header">
+                    <h2 class="mb-0 fw-bold">
+                        <i class="bi bi-plus-circle-fill me-2" style="color: #667eea;"></i>Add New Hospital
+                    </h2>
+                    <p class="text-muted mb-0">Register a new hospital in the system</p>
+                </div>
+               
+            </div>
+
+            <!-- Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span th:utext="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Form Card -->
+            <div class="form-card">
+                <h5 class="mb-4"><i class="bi bi-hospital me-2"></i>Hospital Information</h5>
+                <form th:action="@{/superadmin/add-hospital}" method="post" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Hospital Name <span class="text-danger">*</span></label>
+                                <input type="text" name="hospitalName" class="form-control" required 
+                                       th:value="${hospital?.hospitalName}" placeholder="Enter hospital name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                                <input type="text" name="phoneNo" class="form-control" required 
+                                       th:value="${hospital?.phoneNo}" placeholder="Enter phone number">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                <input type="email" name="gmail" class="form-control" required 
+                                       th:value="${hospital?.gmail}" placeholder="Enter email address">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
+                                <textarea name="address" class="form-control" rows="3" required
+                                          th:text="${hospital?.address}" placeholder="Enter full address"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Profile Pictures</label>
+                        <input type="file" name="profilePicturesFiles" class="form-control" multiple accept="image/*"
+                               onchange="previewImages(this)">
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> You can select multiple images. JPG, PNG, GIF, WEBP supported.
+                        </div>
+                    </div>
+
+					<!-- Existing Images Preview (for editing/viewing hospital) -->
+					<div th:if="${hospital?.profilePictures}" class="mb-4">
+    					<label class="form-label fw-semibold">Existing Images:</label>
+    				<div class="image-preview-container">
+        				<img th:each="img : ${hospital.profilePictures}" 
+             		th:src="@{'/uploads/hospitals/' + ${img}}" 
+             		class="image-preview" 
+             		th:alt="${hospital.hospitalName + ' image'}"/>
+    			</div>
+			</div>
+					
+
+                    <!-- Image Preview -->
+                    <div id="imagePreview" class="mb-4 d-none">
+                        <label class="form-label fw-semibold">Selected Images Preview:</label>
+                        <div class="image-preview-container" id="previewContainer"></div>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i> Add Hospital
+                        </button>
+                        <a th:href="@{/superadmin/hospital-list}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function previewImages(input) {
+            const previewContainer = document.getElementById('previewContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            previewContainer.innerHTML = '';
+            if (input.files && input.files.length > 0) {
+                imagePreview.classList.remove('d-none');
+                for (let i = 0; i < input.files.length; i++) {
+                    const file = input.files[i];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'image-preview';
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            } else {
+                imagePreview.classList.add('d-none');
+            }
+        }
+
+        // Number Animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const animateValue = (element, start, end, duration) => {
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    element.textContent = Math.floor(progress * (end - start) + start);
+                    if (progress < 1) window.requestAnimationFrame(step);
+                };
+                window.requestAnimationFrame(step);
+            };
+
+            const statsValue = document.querySelector('.stats-value');
+            if (statsValue) {
+                const finalValue = parseInt(statsValue.textContent) || 0;
+                animateValue(statsValue, 0, finalValue, 1500);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="fragments/head :: head(${title})"></th:block>
+  <style>
+    .stats-card{background:#fff;border-radius:10px;padding:1.5rem;box-shadow:0 4px 6px rgba(0,0,0,.1);border-left:4px solid;transition:transform .3s,box-shadow .3s}
+    .stats-card:hover{transform:translateY(-4px);box-shadow:0 8px 14px rgba(0,0,0,.12)}
+    .stats-card.blood-donated{border-left-color:#c62828;background:linear-gradient(135deg,rgba(198,40,40,.05),#fff)}
+    .stats-card.blood-requests{border-left-color:#e91e63;background:linear-gradient(135deg,rgba(233,30,99,.05),#fff)}
+    .stats-card.pending-donors{border-left-color:#ffc107;background:linear-gradient(135deg,rgba(255,193,7,.08),#fff)}
+    .stats-card.total-appointments{border-left-color:#4895ef;background:linear-gradient(135deg,rgba(72,149,239,.06),#fff)}
+    .stats-icon{font-size:3rem;opacity:.28;position:absolute;right:1.25rem;top:50%;transform:translateY(-50%)}
+    .stats-card.blood-donated .stats-icon{color:#c62828}.stats-card.blood-requests .stats-icon{color:#e91e63}
+    .stats-card.pending-donors .stats-icon{color:#ffc107}.stats-card.total-appointments .stats-icon{color:#4895ef}
+    .stats-label{font-size:.95rem;color:#6c757d;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+    .stats-value{font-size:2.5rem;font-weight:700;margin:0}
+    .badge.bt{font-weight:600}
+    .chart-card{border-left-color:#c62828}
+    .btn-range{min-width:140px}
+  </style>
+</head>
+<body>
+<div th:replace="fragments/sidebar :: sidebar(${active})"></div>
+<div id="content">
+  <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+  <main class="container-fluid p-4">
+    <div class="mb-4">
+      <h2 class="mb-0 fw-bold" style="color: var(--primary-color);">
+        <i class="bi bi-speedometer2 me-2" style="color:#c62828;"></i>Dashboard
+      </h2>
+      <p class="text-muted mb-0">Blood Bank Management Overview</p>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-4">
+      <div class="col-lg-3 col-md-6">
+        <div class="stats-card blood-donated position-relative">
+          <i class="bi bi-droplet-fill stats-icon"></i>
+          <p class="stats-label mb-2">Total Blood Donated</p>
+          <h3 class="stats-value" th:text="${totalBloodDonated!=null?totalBloodDonated:0}">0</h3>
+          <p class="mb-0 text-success small"><i class="bi bi-arrow-up-circle-fill me-1"></i>Units</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <div class="stats-card blood-requests position-relative">
+          <i class="bi bi-clipboard-heart stats-icon"></i>
+          <p class="stats-label mb-2">Pending Blood Request</p>
+          <h3 class="stats-value" th:text="${pendingBloodRequests!=null?pendingBloodRequests:0}">0</h3>
+          <p class="mb-0 text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Requests</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <div class="stats-card pending-donors position-relative">
+          <i class="bi bi-hourglass-split stats-icon"></i>
+          <p class="stats-label mb-2">Pending Donors</p>
+          <h3 class="stats-value" th:text="${pendingDonors!=null?pendingDonors:0}">0</h3>
+          <p class="mb-0 small" style="color:#cc9a00;"><i class="bi bi-clock-fill me-1"></i>Awaiting</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <div class="stats-card total-appointments position-relative">
+          <i class="bi bi-calendar-check stats-icon"></i>
+          <p class="stats-label mb-2">Total Appointments</p>
+          <h3 class="stats-value" th:text="${totalAppointments!=null?totalAppointments:0}">0</h3>
+          <p class="mb-0 text-primary small"><i class="bi bi-calendar2-event me-1"></i>Scheduled</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Donations Overview (stacked, range selector) -->
+    <div class="row g-4 mt-1">
+      <div class="col-12">
+        <div class="stats-card chart-card position-relative">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+              <h5 class="mb-0"><i class="bi bi-bar-chart-steps me-2" style="color:#c62828;"></i>Donations Overview</h5>
+              <small class="text-muted" th:text="${donationSubtitle}">Daily (30 days)</small>
+            </div>
+            <form class="d-inline" method="get" th:action="@{/admin}">
+              <select class="form-select form-select-sm btn-range" name="range" onchange="this.form.submit()">
+                <option value="7d"  th:selected="${range}=='7d'">Last 7 Days</option>
+                <option value="30d" th:selected="${range}=='30d'">Last 30 Days</option>
+                <option value="3m"  th:selected="${range}=='3m'">Last 3 Months</option>
+              </select>
+            </form>
+          </div>
+          <div style="height:360px;">
+            <canvas id="donationOverview"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- Recent Donor Appointments (4 latest) -->
+<div class="row g-4 mt-1">
+  <div class="col-12">
+    <div class="stats-card position-relative" style="border-left-color:#6c63ff;">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h5 class="mb-0">
+          <i class="bi bi-people me-2" style="color:#6c63ff;"></i>
+          Recent Donor Appointments
+        </h5>
+        <a class="btn btn-sm btn-outline-secondary" th:href="@{/admin/appointments}">
+          View All
+        </a>
+      </div>
+
+          <div th:if="${recentApptNote != null}" class="alert alert-info py-2 mb-0" th:text="${recentApptNote}">Select a hospital…</div>
+
+          <div class="table-responsive" th:if="${recentAppointments != null}">
+            <table class="table align-middle">
+              <thead>
+              <tr>
+                <th style="width:35%">Donor</th>
+                <th style="width:15%">Blood Type</th>
+                <th style="width:30%">Date and Time</th>
+                <th style="width:20%">Status</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:if="${#lists.isEmpty(recentAppointments)}">
+                <td colspan="4" class="text-muted">No recent appointments.</td>
+              </tr>
+
+              <tr th:each="r : ${recentAppointments}">
+                <td><i class="bi bi-person-circle me-2 text-secondary"></i><span th:text="${r.username}">John</span></td>
+                <td>
+                  <span class="badge rounded-pill bt"
+                        th:classappend="${r.bloodType=='A+' ? ' bg-danger' :
+                                        (r.bloodType=='A-' ? ' bg-danger-subtle text-danger' :
+                                        (r.bloodType=='B+' ? ' bg-primary' :
+                                        (r.bloodType=='B-' ? ' bg-primary-subtle text-primary' :
+                                        (r.bloodType=='O+' ? ' bg-success' :
+                                        (r.bloodType=='O-' ? ' bg-success-subtle text-success' :
+                                        (r.bloodType=='AB+' ? ' bg-warning text-dark' :
+                                         ' bg-warning-subtle text-dark'))))))}">
+                    <span th:text="${r.bloodType}">A+</span>
+                  </span>
+                </td>
+                <td><i class="bi bi-calendar2-event me-2 text-secondary"></i><span th:text="${r.dateDmy + ' ' + r.time12}">25-10-2025 02:15 PM</span></td>
+                <td>
+                  <span class="badge rounded-pill"
+                        th:classappend="${#strings.equalsIgnoreCase(r.status,'pending')    ? ' bg-warning text-dark' :
+                                         (#strings.equalsIgnoreCase(r.status,'completed')  ? ' bg-success' :
+                                         (#strings.equalsIgnoreCase(r.status,'expired')    ? ' bg-secondary' :
+                                         (#strings.equalsIgnoreCase(r.status,'cancelled')  ? ' bg-danger' :
+                                                                                             ' bg-light text-dark border')))}"
+                        th:text="${#strings.capitalize(r.status)}">
+                    Pending
+                  </span>
+                </td>
+              </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+<!-- Recent Blood Requests (4 latest) -->
+<div class="row g-4 mt-1">
+  <div class="col-12">
+    <div class="stats-card position-relative" style="border-left-color:#e91e63;">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h5 class="mb-0">
+          <i class="bi bi-clipboard2-pulse me-2" style="color:#e91e63;"></i>
+          Recent Blood Requests
+        </h5>
+        <a class="btn btn-sm btn-outline-secondary" th:href="@{/admin/recipients}">
+          View All
+        </a>
+      </div>
+
+          <div th:if="${recentReqNote != null}" class="alert alert-info py-2 mb-0" th:text="${recentReqNote}">Showing latest requests…</div>
+
+          <div class="table-responsive" th:if="${recentRequests != null}">
+            <table class="table align-middle">
+              <thead>
+              <tr>
+                <th style="width:30%">Recipient</th>
+                <th style="width:15%">Blood Type</th>
+                <th style="width:15%">Quantity</th>
+                <th style="width:20%">Required Date</th>
+                <th style="width:10%">Urgency</th>
+                <th style="width:10%">Status</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:if="${#lists.isEmpty(recentRequests)}">
+                <td colspan="6" class="text-muted">No recent requests.</td>
+              </tr>
+
+              <tr th:each="r : ${recentRequests}">
+                <td><i class="bi bi-person-heart me-2 text-secondary"></i><span th:text="${r.username}">Jane</span></td>
+
+                <td>
+                  <span class="badge rounded-pill bt"
+                        th:classappend="${r.bloodType=='A+' ? ' bg-danger' :
+                                        (r.bloodType=='A-' ? ' bg-danger-subtle text-danger' :
+                                        (r.bloodType=='B+' ? ' bg-primary' :
+                                        (r.bloodType=='B-' ? ' bg-primary-subtle text-primary' :
+                                        (r.bloodType=='O+' ? ' bg-success' :
+                                        (r.bloodType=='O-' ? ' bg-success-subtle text-success' :
+                                        (r.bloodType=='AB+' ? ' bg-warning text-dark' :
+                                         ' bg-warning-subtle text-dark'))))))}">
+                    <span th:text="${r.bloodType}">A+</span>
+                  </span>
+                </td>
+
+                <td><span class="fw-semibold" th:text="${r.quantity}">2</span> <small class="text-muted">units</small></td>
+                <td><i class="bi bi-calendar2-week me-2 text-secondary"></i><span th:text="${r.requiredDmy}">25-10-2025</span></td>
+
+                <!-- Urgency badge -->
+                <td>
+                  <span class="badge rounded-pill"
+                        th:classappend="${#strings.equalsIgnoreCase(r.urgency,'HIGH')   ? ' bg-danger' :
+                                         (#strings.equalsIgnoreCase(r.urgency,'MEDIUM') ? ' bg-warning text-dark' :
+                                         (#strings.equalsIgnoreCase(r.urgency,'LOW')    ? ' bg-info text-dark' :
+                                                                                          ' bg-light text-dark border'))}"
+                        th:text="${#strings.capitalize(#strings.toLowerCase(r.urgency))}">
+                    High
+                  </span>
+                </td>
+
+                <!-- Status badge -->
+                <td>
+                  <span class="badge rounded-pill"
+                        th:classappend="${#strings.equalsIgnoreCase(r.status,'pending')    ? ' bg-warning text-dark' :
+                                         (#strings.equalsIgnoreCase(r.status,'approved')   ? ' bg-primary' :
+                                         (#strings.equalsIgnoreCase(r.status,'completed')  ? ' bg-success' :
+                                         (#strings.equalsIgnoreCase(r.status,'cancelled')  ? ' bg-danger' :
+                                         (#strings.equalsIgnoreCase(r.status,'expired')    ? ' bg-secondary' :
+                                                                                              ' bg-light text-dark border'))))}"
+                        th:text="${#strings.capitalize(r.status)}">
+                    Pending
+                  </span>
+                </td>
+              </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script th:inline="javascript">
+  // ---- Data from server ----
+  const labels = /*[[${donationLabels}]]*/ [];
+  const btOrder = /*[[${donationBtOrder}]]*/ ["A+","A-","B+","B-","O+","O-","AB+","AB-"];
+  const series = /*[[${donationSeries}]]*/ {};
+  const COLORS = {"A+":"#ef5350","A-":"#e53935","B+":"#42a5f5","B-":"#1e88e5","O+":"#66bb6a","O-":"#43a047","AB+":"#ffa726","AB-":"#fb8c00"};
+
+  const ds = btOrder.map(bt => ({
+    label: bt,
+    data: (series && series[bt]) ? series[bt] : Array(labels.length).fill(0),
+    backgroundColor: COLORS[bt] || '#999',
+    borderWidth: 0,
+    stack: 'one'
+  }));
+
+  const ctx = document.getElementById('donationOverview').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: ds },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            footer: (items) => {
+              const total = items.reduce((s, it) => s + (it.parsed.y || 0), 0);
+              return 'Total: ' + total;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+</script>
+</body>
+</html>

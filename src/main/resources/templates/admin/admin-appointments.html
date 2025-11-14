@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Donor Appointments</title>
+  <!-- Head -->
+  <th:block th:replace="fragments/head :: head(${title})"></th:block>
+
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <!-- Custom Donor Admin CSS (keeps your colors/template) -->
+  <link rel="stylesheet" th:href="@{/css/donor-admin.css}">
+
+  <style>
+    /* Status chips */
+    .appointment-status {
+      padding: 0.25rem 0.65rem;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .status-pending   { background-color: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid #ffc107; }
+    .status-completed { background-color: #198754; color: #fff; border: none; }
+    .status-cancelled { background-color: #dc3545; color: #fff; border: none; }
+    .status-expired   { background-color: #6c757d; color: #fff; border: none; }
+
+    /* Action buttons */
+    .btn-complete {
+      background: linear-gradient(135deg, #198754 0%, #157347 100%);
+      border: none; color: white; padding: 0.35rem 0.75rem; border-radius: 6px;
+      font-weight: 600; font-size: 0.8rem; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .btn-complete:hover:not(:disabled) { background: linear-gradient(135deg, #157347 0%, #198754 100%); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(25,135,84,.3); }
+
+    .btn-reject {
+      background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+      border: none; color: white; padding: 0.35rem 0.75rem; border-radius: 6px;
+      font-weight: 600; font-size: 0.8rem; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .btn-reject:hover:not(:disabled) { background: linear-gradient(135deg, #b02a37 0%, #dc3545 100%); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(220,53,69,.3); }
+
+    .btn-complete:disabled, .btn-reject:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* Badges */
+    .date-badge { background: var(--light-color); color: var(--dark-color); padding: .3rem .6rem; border-radius: 6px; font-weight: 600; font-size: .85rem; display: inline-flex; align-items: center; gap: .3rem; }
+    .time-badge { background: rgba(72,149,239,.1); color: var(--info-color); padding: .3rem .6rem; border-radius: 6px; font-weight: 600; font-size: .85rem; display: inline-flex; align-items: center; gap: .3rem; }
+
+    /* Search & filter (theme colors) */
+    .search-filter-container { background: #fff; padding: 1.25rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); margin-bottom: 1.5rem; }
+    .search-input-wrapper { position: relative; flex: 1; max-width: 400px; }
+    .search-input-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--secondary-color); }
+    .search-input { width: 100%; padding: .6rem .75rem .6rem 2.5rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: .9rem; transition: all .3s ease; }
+    .search-input:focus { outline: none; border-color: var(--secondary-color); box-shadow: 0 0 0 3px rgba(198, 40, 40, .15); }
+    .filter-select { padding: .6rem 2.5rem .6rem .75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: .9rem; font-weight: 500; cursor: pointer; transition: all .3s ease; background: #fff; min-width: 160px; }
+    .filter-select:focus { outline: none; border-color: var(--secondary-color); box-shadow: 0 0 0 3px rgba(198, 40, 40, .15); }
+    .clear-btn { padding: .6rem 1.2rem; border: 2px solid #e0e0e0; border-radius: 8px; background: #fff; color: #6c757d; font-weight: 600; font-size: .9rem; cursor: pointer; transition: all .3s ease; display: inline-flex; align-items: center; gap: .4rem; }
+    .clear-btn:hover { background: #f8f9fa; border-color: var(--secondary-color); color: var(--secondary-color); }
+
+    /* Empty state */
+    .no-results { text-align: center; padding: 1.25rem 0; color: #6c757d; }
+
+    /* Blood type badge */
+    .blood-badge{
+      background: var(--secondary-color);   /* your theme’s red */
+      color:#fff;
+      padding:.35rem .7rem;
+      font-weight:700;
+        border-radius: 8px;
+      
+      font-size:1rem;                       /* bigger text */
+      display:inline-flex;
+      align-items:center;
+      gap:.35rem;
+    }
+    .blood-badge i{ opacity:.95; }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div th:replace="fragments/sidebar :: sidebar(${active})"></div>
+
+  <!-- Main Content -->
+  <div id="content">
+    <!-- Top nav -->
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+    <!-- Page content -->
+    <main class="container-fluid p-4">
+
+      <!-- Page Header -->
+      <div class="mb-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-calendar-check page-header-icon"></i>
+          <div>
+            <h2 class="mb-0 fw-bold" style="color: var(--primary-color);">Donor Appointments</h2>
+            <p class="text-muted mb-0">
+              <i class="bi bi-arrow-right-short"></i>Review and manage donation appointments
+            </p>
+          </div>
+        </div>
+        <span class="success-badge">
+          <i class="bi bi-clock-history me-1"></i>
+          <span th:text="${appointments.size()}" id="totalCount"></span> Total
+        </span>
+      </div>
+
+      <!-- Search & Filter -->
+      <div class="search-filter-container">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+          <!-- Search -->
+          <div class="search-input-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search by name or email...">
+          </div>
+
+          <!-- Status -->
+          <div class="d-flex align-items-center gap-2">
+            <label for="statusFilter" class="mb-0 text-muted fw-semibold">
+              <i class="bi bi-funnel"></i> Status:
+            </label>
+            <select id="statusFilter" class="filter-select">
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+
+          <!-- Clear -->
+          <button id="clearBtn" class="clear-btn" type="button">
+            <i class="bi bi-x-circle"></i> Clear
+          </button>
+
+          <!-- Counts -->
+          <div class="ms-auto">
+            <span class="text-muted">
+              Showing <strong id="visibleCount">0</strong> of Total <strong id="totalAppointments">0</strong>
+            </span>
+          </div>
+
+          <!-- Per page -->
+          <div class="d-flex align-items-center gap-2">
+            <select id="perPage" class="form-select form-select-sm" style="width:auto; min-width: 80px;">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+            <label for="perPage" class="form-label mb-0 text-muted">per page</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointments Table -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <i class="bi bi-calendar2-check"></i>
+          <span>Appointment Requests</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table donor-table">
+            <thead>
+              <tr>
+                <th><i class="bi bi-hash"></i>No.</th>
+                <th><i class="bi bi-person"></i>Donor Name</th>
+                <th><i class="bi bi-droplet"></i>Blood Type</th>
+                <th><i class="bi bi-envelope"></i>Email</th>
+                <th><i class="bi bi-telephone"></i>Phone</th>
+                <th><i class="bi bi-calendar-date"></i>Date</th>
+                <th><i class="bi bi-clock"></i>Time</th>
+                <th><i class="bi bi-calendar-plus"></i>Created</th>
+                <th><i class="bi bi-activity"></i>Status</th>
+                <th><i class="bi bi-gear"></i>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="appointmentsTable">
+              <tr th:each="a, i : ${appointments}" class="appointment-row">
+                <td><span class="row-number" th:text="${i.count}"></span></td>
+                <td class="donor-name">
+                  <i class="bi bi-person-circle text-muted me-1"></i>
+                  <strong th:text="${a.username}"></strong>
+                </td>
+
+                <!-- Blood Type -->
+                <td class="text-nowrap">
+                  <span class="blood-badge">
+                    <span th:text="${a.blood_type != null ? a.blood_type : '—'}"></span>
+                  </span>
+                </td>
+
+                <td class="text-nowrap donor-email">
+                  <i class="bi bi-envelope-fill text-muted me-1"></i>
+                  <span th:text="${a.email}"></span>
+                </td>
+                <td>
+                  <i class="bi bi-phone-vibrate text-muted me-1"></i>
+                  <span th:text="${a.phone}"></span>
+                </td>
+                <td class="text-nowrap">
+                  <span class="date-badge">
+                    <i class="bi bi-calendar3"></i>
+                    <span th:text="${a.date_dmy != null ? a.date_dmy : a.date}"></span>
+                  </span>
+                </td>
+
+                <td>
+                  <span class="time-badge">
+                    <i class="bi bi-clock-fill"></i>
+                    <span th:text="${a.time12 != null ? a.time12 : a.time}"></span>
+                  </span>
+                </td>
+                <td>
+                  <span th:text="${#dates.format(a.created_at, 'dd-MM-yyyy hh:mma')}"></span>
+                </td>
+                <td>
+                  <span class="appointment-status-cell"
+                        th:classappend="${a.status == 'pending'   ? 'appointment-status status-pending'   :
+                                         (a.status == 'completed' ? 'appointment-status status-completed' :
+                                         (a.status == 'cancelled' ? 'appointment-status status-cancelled' :
+                                         (a.status == 'expired'   ? 'appointment-status status-expired'   :
+                                         'appointment-status status-pending')))}"
+                        th:attr="data-status=${a.status}">
+                    <i th:classappend="${a.status == 'pending'   ? 'bi bi-hourglass-split'     :
+                                        (a.status == 'completed' ? 'bi bi-check-circle-fill' :
+                                        (a.status == 'cancelled' ? 'bi bi-x-circle-fill'     :
+                                        (a.status == 'expired'   ? 'bi bi-hourglass-bottom'  :
+                                                                   'bi bi-hourglass-split')))}"></i>
+                    <span th:text="${a.status}"></span>
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <form th:action="@{/admin/donors/appointments/{id}/complete(id=${a.id})}" method="post" style="display:inline">
+                      <button type="submit" class="btn-complete" th:disabled="${a.status != 'pending'}">
+                        <i class="bi bi-check-circle-fill"></i>Complete
+                      </button>
+                    </form>
+                    <form th:action="@{/admin/donors/appointments/{id}/cancel(id=${a.id})}" method="post" style="display:inline">
+                      <button type="submit" class="btn-reject" th:disabled="${a.status != 'pending'}">
+                        <i class="bi bi-x-circle-fill"></i>Cancel
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Empty State -->
+              <tr id="noResults" style="display:none;">
+                <td colspan="10" class="no-results">
+                  <i class="bi bi-search"></i>
+                  <div>No appointments found</div>
+                  <small class="text-muted">Try adjusting your search or filters</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (client-side) with FIRST / LAST -->
+        <nav aria-label="Donor pagination" class="d-flex justify-content-center p-3">
+          <ul id="pager" class="pagination mb-0"
+              style="
+                --bs-pagination-color: var(--secondary-color);
+                --bs-pagination-hover-color: var(--secondary-color);
+                --bs-pagination-focus-box-shadow: 0 0 0 .25rem rgba(198,40,40,.25);
+                --bs-pagination-active-bg: var(--secondary-color);
+                --bs-pagination-active-border-color: var(--secondary-color);
+              ">
+            <!-- JS injects First / Prev / pages / Next / Last -->
+          </ul>
+        </nav>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- JS loaded directly -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script th:src="@{/js/dashboard.js}"></script>
+
+  <script>
+  window.addEventListener('DOMContentLoaded', () => {
+    // --- per-page selector + persisted preference ---
+    const perPage = document.getElementById('perPage');
+    const savedPageSize = parseInt(localStorage.getItem('apptPerPage') || '5', 10);
+    if (!isNaN(savedPageSize)) perPage.value = String(savedPageSize);
+    let PAGE_SIZE = parseInt(perPage.value, 10) || 5;
+
+    // DOM
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const clearBtn = document.getElementById('clearBtn');
+    const tbody = document.getElementById('appointmentsTable');
+    const allRows = Array.from(tbody.querySelectorAll('.appointment-row'));
+    const noResults = document.getElementById('noResults');
+    const visibleCount = document.getElementById('visibleCount');
+    const totalAppointments = document.getElementById('totalAppointments');
+    const pager = document.getElementById('pager');
+
+    // state
+    let filteredRows = allRows.slice();
+    let currentPage = 1;
+
+    const totalPages = () => Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+
+    // init
+    applyFilters();
+
+    // events
+    perPage.addEventListener('change', () => {
+      PAGE_SIZE = parseInt(perPage.value, 10) || 5;
+      localStorage.setItem('apptPerPage', String(PAGE_SIZE));
+      currentPage = Math.min(currentPage, totalPages());
+      currentPage = Math.max(1, currentPage);
+      render();
+    });
+
+    searchInput.addEventListener('input', debounce(applyFilters, 120));
+    statusFilter.addEventListener('change', applyFilters);
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      statusFilter.value = 'all';
+      applyFilters();
+    });
+
+    // logic
+    function applyFilters() {
+      const term = (searchInput.value || '').trim().toLowerCase();
+      const wantStatus = (statusFilter.value || 'all').toLowerCase();
+
+      filteredRows = allRows.filter(row => {
+        const name = (row.querySelector('.donor-name')?.textContent || '').toLowerCase();
+        const email = (row.querySelector('.donor-email')?.textContent || '').toLowerCase();
+        const status = (row.querySelector('.appointment-status-cell')?.getAttribute('data-status') || '').toLowerCase();
+
+        const matchText = !term || name.includes(term) || email.includes(term);
+        const matchStatus = wantStatus === 'all' || status === wantStatus;
+        return matchText && matchStatus;
+      });
+
+      currentPage = 1;
+      totalAppointments.textContent = filteredRows.length.toString();
+      render();
+    }
+
+    function render() {
+      // hide all
+      allRows.forEach(r => r.style.display = 'none');
+
+      // show current page
+      const startIdx = (currentPage - 1) * PAGE_SIZE;
+      const endIdx = Math.min(startIdx + PAGE_SIZE, filteredRows.length);
+      for (let i = startIdx; i < endIdx; i++) {
+        filteredRows[i].style.display = '';
+      }
+
+      // counts & empty state
+      const onPage = Math.max(0, endIdx - startIdx);
+      visibleCount.textContent = onPage.toString();
+      noResults.style.display = filteredRows.length === 0 ? '' : 'none';
+
+      buildPager();
+      pager.parentElement.style.display = totalPages() > 1 ? '' : 'none';
+    }
+
+    // pagination UI helpers
+    function pageItem(label, enabled, targetPage, { active = false, ariaLabel = null } = {}) {
+      const li = document.createElement('li');
+      li.className = 'page-item' + (enabled ? '' : ' disabled') + (active ? ' active' : '');
+      const a = document.createElement('a');
+      a.className = 'page-link';
+      a.href = '#';
+      a.textContent = label;
+      if (ariaLabel) a.setAttribute('aria-label', ariaLabel);
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        if (!enabled) return;
+        currentPage = targetPage;
+        render();
+      });
+      li.appendChild(a);
+      return li;
+    }
+
+    function addPageNumber(num) {
+      const isActive = currentPage === num;
+      pager.appendChild(pageItem(String(num), !isActive, num, { active: isActive, ariaLabel: `Page ${num}` }));
+    }
+
+    function addEllipsis() {
+      const li = document.createElement('li');
+      li.className = 'page-item disabled';
+      li.innerHTML = `<span class="page-link">…</span>`;
+      pager.appendChild(li);
+    }
+
+    // Build: First / Prev / [numbers window with ellipses] / Next / Last
+    function buildPager() {
+      const pages = totalPages();
+      pager.innerHTML = '';
+
+      // First / Prev
+      pager.appendChild(pageItem('First', currentPage > 1, 1, { ariaLabel: 'First page' }));
+      pager.appendChild(pageItem('Prev', currentPage > 1, Math.max(1, currentPage - 1), { ariaLabel: 'Previous page' }));
+
+      // numbered pages (windowed)
+      const windowSize = 7; // total numbers to show
+      const half = Math.floor(windowSize / 2);
+      let start = Math.max(1, currentPage - half);
+      let end = Math.min(pages, start + windowSize - 1);
+      start = Math.max(1, Math.min(start, end - windowSize + 1)); // correct start if near end
+
+      // leading ellipsis
+      if (start > 1) {
+        addPageNumber(1);
+        if (start > 2) addEllipsis();
+      }
+
+      // window
+      for (let p = start; p <= end; p++) addPageNumber(p);
+
+      // trailing ellipsis
+      if (end < pages) {
+        if (end < pages - 1) addEllipsis();
+        addPageNumber(pages);
+      }
+
+      // Next / Last
+      pager.appendChild(pageItem('Next', currentPage < pages, Math.min(pages, currentPage + 1), { ariaLabel: 'Next page' }));
+      pager.appendChild(pageItem('Last', currentPage < pages, pages, { ariaLabel: 'Last page' }));
+    }
+
+    function debounce(fn, ms) {
+      let t;
+      return function () {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, arguments), ms);
+      };
+    }
+
+    // confirm dialogs for actions
+    document.querySelectorAll('.btn-complete, .btn-reject').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        if (!this.disabled) {
+          const action = this.classList.contains('btn-complete') ? 'complete' : 'cancel';
+          if (!confirm(`Are you sure you want to ${action} this appointment?`)) {
+            e.preventDefault();
+          }
+        }
+      });
+    });
+  });
+  </script>
+</body>
+</html>

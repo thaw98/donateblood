@@ -1,0 +1,186 @@
+<!-- src/main/resources/templates/admin/profile.html -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="fragments/head :: head(${title})"></th:block>
+  <style>
+    /* Layout: keep the page narrow and centered */
+    .container-narrow { max-width: 980px; margin: 0 auto; }
+
+    /* Cards & visuals */
+    .card       { border: 0; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.08); }
+    .card-hero  { background: linear-gradient(135deg,#ff6b6b, #ff4757); border-radius: 18px; color:#fff; }
+    .avatar-xl  { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+
+    /* Inputs with icons */
+    .input-icon .input-group-text { background: #f8f9fa; border-right: 0; }
+    .input-icon .form-control     { border-left: 0; }
+
+    /* Text helpers */
+    .readonly-badge { position:absolute; right:.5rem; top:.5rem; }
+    .section-title  { font-weight: 700; letter-spacing:.2px; }
+    .muted-label    { font-weight: 600; color:#6c757d; font-size: .95rem; }
+    .hint           { font-size: .85rem; color:#6c757d; }
+
+    /* Make the hero card content breathe on small screens */
+    @media (max-width: 576px) {
+      .hero-flex { flex-direction: column; align-items: flex-start !important; }
+      .hero-flex .avatar-xl { margin-bottom: .75rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div th:replace="fragments/sidebar :: sidebar(${active})"></div>
+
+  <!-- Content -->
+  <div id="content">
+    <div th:replace="~{fragments/topnav :: topnav(${userName}, ${avatarUrl})}"></div>
+
+    <main class="container-fluid p-4">
+      <!-- Narrow, centered wrapper -->
+      <div class="container-narrow">
+
+        <!-- Page header -->
+        <div class="mb-4">
+          <h2 class="mb-1 fw-bold d-flex align-items-center">
+            <i class="bi bi-person-gear me-2 text-danger"></i> Profile
+          </h2>
+          <p class="text-muted mb-0">Manage your account details and password</p>
+        </div>
+
+        <!-- Alerts -->
+        <div th:if="${error}"   class="alert alert-danger d-flex align-items-center" role="alert">
+          <i class="bi bi-x-circle-fill me-2"></i>
+          <span th:text="${error}">Something went wrong.</span>
+        </div>
+        <div th:if="${success}" class="alert alert-success d-flex align-items-center" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <span th:text="${success}">Saved successfully.</span>
+        </div>
+
+        <!-- Profile summary (RED gradient) -->
+        <div class="card card-hero p-4 mb-4">
+          <div class="d-flex align-items-center hero-flex">
+            <img
+              class="avatar-xl me-3"
+              th:src="${avatarUrl != null ? avatarUrl
+                     : 'https://ui-avatars.com/api/?name='
+                       + #strings.replace((#strings.isEmpty(profileName) ? 'Admin' : profileName), ' ', '+')
+                       + '&background=FF6B6B&color=FFFFFF&size=160'}"
+              alt="Avatar">
+            <div>
+              <div class="h5 mb-1" th:text="${profileName}">Admin User</div>
+              <div class="d-flex align-items-center small">
+                <i class="bi bi-envelope-open me-2"></i>
+                <span th:text="${profileEmail}">admin@example.com</span>
+              </div>
+              <div class="d-flex align-items-center small mt-1">
+                <i class="bi bi-hospital me-2"></i>
+                <span th:text="${profileHospital}">Hospital Name</span>
+              </div>
+            </div>
+          </div>
+          <hr class="border-light opacity-50 my-4">
+          <ul class="list-unstyled m-0">
+            <li class="d-flex align-items-center mb-2">
+              <i class="bi bi-person-badge me-2"></i><span class="opacity-75">Your personal info is used on reports and logs.</span>
+            </li>
+            <li class="d-flex align-items-center mb-2">
+              <i class="bi bi-shield-lock me-2"></i><span class="opacity-75">Choose a strong password to keep your account secure.</span>
+            </li>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-info-circle me-2"></i><span class="opacity-75">Email & Hospital are managed by the system.</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Edit Details (centered, not full width) -->
+        <div class="card p-4 mb-5">
+          <div class="mb-3 d-flex align-items-center">
+            <i class="bi bi-pencil-square text-danger me-2 fs-5"></i>
+            <span class="section-title">Edit Details</span>
+          </div>
+
+          <form method="post" th:action="@{/admin/profile}">
+            <div class="row g-4">
+
+              <!-- Name (editable) -->
+              <div class="col-md-12">
+                <label class="muted-label mb-2" for="name">Name</label>
+                <div class="input-group input-icon">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                  <input id="name" name="name" type="text" class="form-control" th:value="${profileName}" required>
+                </div>
+              </div>
+
+              <!-- Email (read-only) -->
+              <div class="col-md-6 position-relative">
+                <label class="muted-label mb-2" for="email">Email</label>
+                <div class="input-group input-icon">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  <input id="email" type="text" class="form-control" th:value="${profileEmail}" readonly aria-readonly="true">
+                </div>
+                <span class="badge bg-secondary-subtle text-secondary border readonly-badge">
+                  <i class="bi bi-lock-fill me-1"></i> Read-only
+                </span>
+              </div>
+
+              <!-- Hospital (read-only) -->
+              <div class="col-md-6 position-relative">
+                <label class="muted-label mb-2" for="hospital">Hospital</label>
+                <div class="input-group input-icon">
+                  <span class="input-group-text"><i class="bi bi-hospital"></i></span>
+                  <input id="hospital" type="text" class="form-control" th:value="${profileHospital}" readonly aria-readonly="true">
+                </div>
+                <span class="badge bg-secondary-subtle text-secondary border readonly-badge">
+                  <i class="bi bi-lock-fill me-1"></i> Read-only
+                </span>
+              </div>
+
+              <div class="col-12"><hr></div>
+
+              <div class="mb-2 d-flex align-items-center">
+                <i class="bi bi-shield-lock text-danger me-2 fs-5"></i>
+                <span class="section-title">Change Password</span>
+              </div>
+
+              <!-- New Password -->
+              <div class="col-md-6">
+                <label class="muted-label mb-2" for="newPassword">New Password</label>
+                <div class="input-group input-icon">
+                  <span class="input-group-text"><i class="bi bi-key"></i></span>
+                  <input id="newPassword" name="newPassword" type="password" class="form-control" placeholder="Leave blank to keep current">
+                </div>
+                <div class="hint mt-1"><i class="bi bi-info-circle me-1"></i> Min 6 characters.</div>
+              </div>
+
+              <!-- Confirm Password -->
+              <div class="col-md-6">
+                <label class="muted-label mb-2" for="confirmPassword">Confirm New Password</label>
+                <div class="input-group input-icon">
+                  <span class="input-group-text"><i class="bi bi-check2"></i></span>
+                  <input id="confirmPassword" name="confirmPassword" type="password" class="form-control" placeholder="Repeat new password">
+                </div>
+              </div>
+
+            </div>
+
+            <div class="mt-4 d-flex gap-2 justify-content-end">
+              <a th:href="@{/admin}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+              </a>
+              <button type="submit" class="btn btn-danger">
+                <i class="bi bi-save me-1"></i> Save changes
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div><!-- /.container-narrow -->
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
